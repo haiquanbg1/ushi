@@ -1,7 +1,7 @@
 // middleware/validationMiddleware.js
 const { StatusCodes } = require("http-status-codes");
 const { errorResponse } = require("../utils/response");
-const userAccountService = require("../services/userAccountService");
+const userAccountService = require("../services/userService");
 
 /**
  * Validation helper functions
@@ -18,12 +18,6 @@ const validators = {
         return strongPasswordRegex.test(password);
     },
 
-    isValidUsername: (username) => {
-        // Alphanumeric, underscore, dash, 3-20 characters
-        const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
-        return usernameRegex.test(username);
-    },
-
     isValidPhoneNumber: (phone) => {
         // Vietnamese phone number format
         const phoneRegex = /^(0|\+84)[3-9]\d{8,9}$/;
@@ -35,26 +29,16 @@ const validators = {
  * Validation middleware for user registration
  */
 const validateRegister = async (req, res, next) => {
-    const { username, password, confirmPassword, roleId } = req.body;
+    const { phone, password, confirmPassword, role } = req.body;
+    console.log(req.body);
 
     const errors = [];
 
-    // Username validation
-    if (!username) {
-        errors.push("Username is required");
-    } else if (!validators.isValidUsername(username)) {
-        errors.push("Username must be 3-20 characters long and contain only letters, numbers, underscore, or dash");
-    } else {
-        // Check if username already exists
-        try {
-            const usernameExists = await userAccountService.checkUsernameExists(username);
-            if (usernameExists) {
-                errors.push("Username already exists");
-            }
-        } catch (error) {
-            console.error("Username check error:", error.message);
-            errors.push("Failed to validate username");
-        }
+    // Phone validation
+    if (!phone) {
+        errors.push("Phone number is required");
+    } else if (!validators.isValidPhoneNumber(phone)) {
+        errors.push("Invalid phone number format");
     }
 
     // Password validation
@@ -69,13 +53,6 @@ const validateRegister = async (req, res, next) => {
         errors.push("Confirm password is required");
     } else if (password && confirmPassword && password !== confirmPassword) {
         errors.push("Password and confirm password do not match");
-    }
-
-    // Role validation (optional for registration)
-    if (roleId !== undefined && roleId !== null) {
-        if (!Number.isInteger(roleId) || roleId <= 0) {
-            errors.push("Invalid role ID");
-        }
     }
 
     if (errors.length > 0) {
@@ -94,20 +71,18 @@ const validateRegister = async (req, res, next) => {
  * Validation middleware for user login
  */
 const validateLogin = (req, res, next) => {
-    const { username, password } = req.body;
+    const { phone, password } = req.body;
 
     const errors = [];
 
-    if (!username) {
-        errors.push("Username is required");
-    } else if (username.trim().length < 3) {
-        errors.push("Username must be at least 3 characters long");
+    if (!phone) {
+        errors.push("Phone number is required");
+    } else if (!validators.isValidPhoneNumber(phone)) {
+        errors.push("Invalid phone number format");
     }
 
     if (!password) {
         errors.push("Password is required");
-    } else if (password.length < 6) {
-        errors.push("Password must be at least 6 characters long");
     }
 
     if (errors.length > 0) {
@@ -126,25 +101,25 @@ const validateLogin = (req, res, next) => {
  * Validation middleware for user registration/creation
  */
 const validateUserCreate = async (req, res, next) => {
-    const { username, password, roleId } = req.body;
+    const { phone, password, roleId } = req.body;
 
     const errors = [];
 
-    // Username validation
-    if (!username) {
-        errors.push("Username is required");
-    } else if (!validators.isValidUsername(username)) {
-        errors.push("Username must be 3-20 characters long and contain only letters, numbers, underscore, or dash");
+    // Phone validation
+    if (!phone) {
+        errors.push("Phone number is required");
+    } else if (!validators.isValidPhoneNumber(phone)) {
+        errors.push("Invalid phone number format");
     } else {
-        // Check if username already exists
+        // Check if phone already exists
         try {
-            const usernameExists = await userAccountService.checkUsernameExists(username);
-            if (usernameExists) {
-                errors.push("Username already exists");
+            const phoneExists = await userAccountService.checkPhoneExists(phone);
+            if (phoneExists) {
+                errors.push("Phone number already exists");
             }
         } catch (error) {
-            console.error("Username check error:", error.message);
-            errors.push("Failed to validate username");
+            console.error("Phone check error:", error.message);
+            errors.push("Failed to validate phone number");
         }
     }
 
@@ -178,25 +153,25 @@ const validateUserCreate = async (req, res, next) => {
  * Validation middleware for user update
  */
 const validateUserUpdate = async (req, res, next) => {
-    const { username, password, roleId } = req.body;
+    const { phone, password, roleId } = req.body;
     const userId = req.params.id;
 
     const errors = [];
 
-    // Username validation (if provided)
-    if (username) {
-        if (!validators.isValidUsername(username)) {
-            errors.push("Username must be 3-20 characters long and contain only letters, numbers, underscore, or dash");
+    // Phone validation (if provided)
+    if (phone) {
+        if (!validators.isValidPhoneNumber(phone)) {
+            errors.push("Invalid phone number format");
         } else {
-            // Check if username already exists (excluding current user)
+            // Check if phone already exists for another user
             try {
-                const usernameExists = await userAccountService.checkUsernameExists(username, parseInt(userId));
-                if (usernameExists) {
-                    errors.push("Username already exists");
+                const phoneExists = await userAccountService.checkPhoneExists(phone, parseInt(userId));
+                if (phoneExists) {
+                    errors.push("Phone number already exists");
                 }
             } catch (error) {
-                console.error("Username check error:", error.message);
-                errors.push("Failed to validate username");
+                console.error("Phone check error:", error.message);
+                errors.push("Failed to validate phone number");
             }
         }
     }

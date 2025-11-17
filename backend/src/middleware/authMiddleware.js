@@ -28,7 +28,6 @@ const logout = (res) => {
 
     res.clearCookie("accessToken", cookieOptions);
     res.clearCookie("refreshToken", cookieOptions);
-    res.clearCookie("isLogin", cookieOptions);
 };
 
 const authMiddleware = async (req, res, next) => {
@@ -50,9 +49,7 @@ const authMiddleware = async (req, res, next) => {
 
             // Cache user để tránh query database không cần thiết
             if (req.user?.id !== decodedAccessToken.userId) {
-                req.user = await userService.findOne({
-                    id: decodedAccessToken.userId
-                });
+                req.user = await userService.getUserById(decodedAccessToken.userId);
             }
 
             // Kiểm tra user có tồn tại không
@@ -86,9 +83,7 @@ const authMiddleware = async (req, res, next) => {
         const decodedRefreshToken = decodeRefreshToken(refreshToken);
 
         // Tìm user từ refresh token
-        const user = await userService.findOne({
-            id: decodedRefreshToken.userId
-        });
+        const user = await userService.getUserById(decodedRefreshToken.userId);
 
         if (!user) {
             logout(res);

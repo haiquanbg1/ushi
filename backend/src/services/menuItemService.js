@@ -1,12 +1,11 @@
-const { MenuItem, Category, MenuVariation, OrderDetail, ComboItem, PromotionMenuItem } = require('../models');
+const { Item, Category, OrderDetail, ComboItem } = require('../models');
 
-class MenuItemService {
-    async getAllMenuItems() {
+class ItemService {
+    async getAllItems() {
         try {
-            return await MenuItem.findAll({
+            return await Item.findAll({
                 include: [
                     { model: Category, as: 'category' },
-                    { model: MenuVariation, as: 'variations' }
                 ],
                 order: [['sortOrder', 'ASC'], ['createdAt', 'DESC']]
             });
@@ -15,48 +14,47 @@ class MenuItemService {
         }
     }
 
-    async getMenuItemById(id) {
+    async getItemById(id) {
         try {
-            const menuItem = await MenuItem.findByPk(id, {
+            const item = await Item.findByPk(id, {
                 include: [
                     { model: Category, as: 'category' },
-                    { model: MenuVariation, as: 'variations' }
                 ]
             });
-            if (!menuItem) {
+            if (!item) {
                 throw new Error('Menu item not found');
             }
-            return menuItem;
+            return item;
         } catch (error) {
             throw new Error(`Error fetching menu item: ${error.message}`);
         }
     }
 
-    async createMenuItem(menuItemData) {
+    async createItem(itemData) {
         try {
-            return await MenuItem.create(menuItemData);
+            return await Item.create(itemData);
         } catch (error) {
             throw new Error(`Error creating menu item: ${error.message}`);
         }
     }
 
-    async updateMenuItem(id, updateData) {
+    async updateItem(id, updateData) {
         try {
-            const [updatedCount] = await MenuItem.update(updateData, {
+            const [updatedCount] = await Item.update(updateData, {
                 where: { id }
             });
             if (updatedCount === 0) {
                 throw new Error('Menu item not found or no changes made');
             }
-            return await this.getMenuItemById(id);
+            return await this.getItemById(id);
         } catch (error) {
             throw new Error(`Error updating menu item: ${error.message}`);
         }
     }
 
-    async deleteMenuItem(id) {
+    async deleteItem(id) {
         try {
-            const deletedCount = await MenuItem.destroy({
+            const deletedCount = await Item.destroy({
                 where: { id }
             });
             if (deletedCount === 0) {
@@ -68,13 +66,12 @@ class MenuItemService {
         }
     }
 
-    async getAvailableMenuItems() {
+    async getAvailableItems() {
         try {
-            return await MenuItem.findAll({
+            return await Item.findAll({
                 where: { isAvailable: true },
                 include: [
                     { model: Category, as: 'category' },
-                    { model: MenuVariation, as: 'variations' }
                 ],
                 order: [['sortOrder', 'ASC']]
             });
@@ -83,13 +80,12 @@ class MenuItemService {
         }
     }
 
-    async getMenuItemsByCategory(categoryId) {
+    async getItemsByCategory(categoryId) {
         try {
-            return await MenuItem.findAll({
+            return await Item.findAll({
                 where: { categoryId },
                 include: [
                     { model: Category, as: 'category' },
-                    { model: MenuVariation, as: 'variations' }
                 ],
                 order: [['sortOrder', 'ASC']]
             });
@@ -98,10 +94,10 @@ class MenuItemService {
         }
     }
 
-    async searchMenuItems(searchTerm) {
+    async searchItems(searchTerm) {
         try {
             const { Op } = require('sequelize');
-            return await MenuItem.findAll({
+            return await Item.findAll({
                 where: {
                     [Op.or]: [
                         { name: { [Op.like]: `%${searchTerm}%` } },
@@ -110,7 +106,6 @@ class MenuItemService {
                 },
                 include: [
                     { model: Category, as: 'category' },
-                    { model: MenuVariation, as: 'variations' }
                 ]
             });
         } catch (error) {
@@ -119,4 +114,4 @@ class MenuItemService {
     }
 }
 
-module.exports = new MenuItemService();
+module.exports = new ItemService();

@@ -8,7 +8,7 @@ const {
     requireAdmin,
     requireOwnerOrAdmin,
     requireActive
-} = require('../../middleware/validationMiddeware');
+} = require('../../middleware/roleMiddleware');
 const {
     validateLogin,
     validateRegister,
@@ -20,10 +20,10 @@ const {
     authRateLimit,
     passwordRateLimit,
     apiRateLimit
-} = require('../../middleware/validationMiddeware');
+} = require('../../middleware/rateLimitMiddleware');
 
 /**
- * @route POST /api/auth/login
+ * @route POST /api/v1/auth/login
  * @desc User login
  * @access Public
  */
@@ -35,7 +35,7 @@ router.post('/login',
 );
 
 /**
- * @route POST /api/auth/register
+ * @route POST /api/v1/auth/register
  * @desc User Register
  * @access Public
  */
@@ -47,7 +47,7 @@ router.post('/register',
 );
 
 /**
- * @route POST /api/auth/logout
+ * @route POST /api/v1/auth/logout
  * @desc User logout
  * @access Private (requires authentication)
  */
@@ -58,7 +58,7 @@ router.post('/logout',
 );
 
 /**
- * @route GET /api/auth/me
+ * @route GET /api/v1/auth/me
  * @desc Get current user information
  * @access Private (requires authentication)
  */
@@ -70,7 +70,7 @@ router.get('/me',
 );
 
 /**
- * @route POST /api/auth/refresh
+ * @route POST /api/v1/auth/refresh
  * @desc Refresh access token
  * @access Private (requires refresh token)
  */
@@ -81,7 +81,7 @@ router.post('/refresh',
 );
 
 /**
- * @route GET /api/auth/check
+ * @route GET /api/v1/auth/check
  * @desc Check authentication status
  * @access Private (requires authentication)
  */
@@ -92,7 +92,7 @@ router.get('/check',
 );
 
 /**
- * @route POST /api/auth/change-password
+ * @route POST /api/v1/auth/change-password
  * @desc Change user password
  * @access Private (requires authentication)
  */
@@ -106,7 +106,7 @@ router.post('/change-password',
 );
 
 /**
- * @route POST /api/auth/reset-password
+ * @route POST /api/v1/auth/reset-password
  * @desc Reset user password (Admin only)
  * @access Private (Admin only)
  */

@@ -15,12 +15,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'orderId',
         as: 'order'
       });
-      
-      // Payment belongs to Employee (processed by)
-      Payment.belongsTo(models.Employee, {
-        foreignKey: 'processedByEmployeeId',
-        as: 'processedByEmployee'
-      });
     }
   }
   Payment.init({
@@ -29,11 +23,10 @@ module.exports = (sequelize, DataTypes) => {
     amount: DataTypes.DECIMAL,
     paidAmount: DataTypes.DECIMAL,
     changeAmount: DataTypes.DECIMAL,
-    paymentStatus: DataTypes.ENUM('pending', 'paid', 'failed', 'refunded', 'cancelled'),
-    transactionId: DataTypes.STRING,
-    paymentGateway: DataTypes.STRING,
-    paymentTime: DataTypes.DATE,
-    processedByEmployeeId: DataTypes.INTEGER
+    paymentStatus: {
+      type: DataTypes.ENUM('pending', 'paid', 'failed', 'refunded', 'cancelled'),
+      defaultValue: 'pending'
+    },
   }, {
     sequelize,
     modelName: 'Payment',

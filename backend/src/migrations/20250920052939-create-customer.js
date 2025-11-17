@@ -9,13 +9,15 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      userId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'Users',
+          key: 'id'
+        },
+      },
       fullName: {
-        type: Sequelize.STRING
-      },
-      phone: {
-        type: Sequelize.STRING
-      },
-      email: {
         type: Sequelize.STRING
       },
       dateOfBirth: {
@@ -38,20 +40,6 @@ module.exports = {
       },
       totalSpent: {
         type: Sequelize.DECIMAL
-      },
-      lastVisit: {
-        type: Sequelize.DATE
-      },
-      preferredContactMethod: {
-        type: Sequelize.STRING
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
       }
     });
   },

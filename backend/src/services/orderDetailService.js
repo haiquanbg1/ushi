@@ -1,4 +1,4 @@
-const { OrderDetail, Order, MenuItem, MenuVariation } = require('../models');
+const { OrderDetail, Order, Item, Combo } = require('../models');
 
 class OrderDetailService {
     async getAllOrderDetails() {
@@ -6,8 +6,8 @@ class OrderDetailService {
             return await OrderDetail.findAll({
                 include: [
                     { model: Order, as: 'order' },
-                    { model: MenuItem, as: 'menuItem' },
-                    { model: MenuVariation, as: 'variation' }
+                    { model: Item, as: 'item' },
+                    { model: Combo, as: 'combo' }
                 ]
             });
         } catch (error) {
@@ -20,8 +20,8 @@ class OrderDetailService {
             const orderDetail = await OrderDetail.findByPk(id, {
                 include: [
                     { model: Order, as: 'order' },
-                    { model: MenuItem, as: 'menuItem' },
-                    { model: MenuVariation, as: 'variation' }
+                    { model: Item, as: 'item' },
+                    { model: Combo, as: 'combo' }
                 ]
             });
             if (!orderDetail) {
@@ -75,8 +75,8 @@ class OrderDetailService {
                 where: { orderId },
                 include: [
                     { model: Order, as: 'order' },
-                    { model: MenuItem, as: 'menuItem' },
-                    { model: MenuVariation, as: 'variation' }
+                    { model: Item, as: 'item' },
+                    { model: Combo, as: 'combo' }
                 ]
             });
         } catch (error) {

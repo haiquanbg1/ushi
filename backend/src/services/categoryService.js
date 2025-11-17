@@ -1,12 +1,12 @@
-const { Category, MenuItem, PromotionMenuItem } = require('../models');
+const { Category, Item } = require('../models');
 
 class CategoryService {
     async getAllCategories() {
         try {
             return await Category.findAll({
                 include: [{
-                    model: MenuItem,
-                    as: 'menuItems'
+                    model: Item,
+                    as: 'items'
                 }],
                 order: [['sortOrder', 'ASC'], ['createdAt', 'DESC']]
             });
@@ -19,8 +19,8 @@ class CategoryService {
         try {
             const category = await Category.findByPk(id, {
                 include: [{
-                    model: MenuItem,
-                    as: 'menuItems'
+                    model: Item,
+                    as: 'items'
                 }]
             });
             if (!category) {
@@ -73,8 +73,8 @@ class CategoryService {
             return await Category.findAll({
                 where: { isActive: true },
                 include: [{
-                    model: MenuItem,
-                    as: 'menuItems',
+                    model: Item,
+                    as: 'items',
                     where: { isAvailable: true },
                     required: false
                 }],

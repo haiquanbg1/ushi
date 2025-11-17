@@ -15,11 +15,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'comboId',
         as: 'comboItems'
       });
-      
+
       // Combo has many OrderCombos
-      Combo.hasMany(models.OrderCombo, {
+      Combo.hasMany(models.OrderDetail, {
         foreignKey: 'comboId',
-        as: 'orderCombos'
+        as: 'orderDetails'
       });
     }
   }
@@ -27,12 +27,8 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     description: DataTypes.TEXT,
     price: DataTypes.DECIMAL,
-    imageURL: DataTypes.STRING,
-    isActive: DataTypes.BOOLEAN,
-    validFrom: DataTypes.DATE,
-    validTo: DataTypes.DATE,
-    minItems: DataTypes.INTEGER,
-    maxItems: DataTypes.INTEGER
+    image: DataTypes.STRING,
+    isActive: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Combo',

@@ -1,0 +1,27 @@
+'use client';
+import { X } from 'lucide-react';
+
+export default function Modal({ open, title, children, onClose }) {
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+            <div
+                className="w-full sm:max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-4"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-slate-200 font-semibold text-base">{title}</h3>
+                    <button
+                        onClick={onClose}
+                        className="p-1 rounded-lg hover:bg-slate-900 text-slate-400 transition-colors"
+                        type="button"
+                    >
+                        <X className="size-5" />
+                    </button>
+                </div>
+                <div>{children}</div>
+            </div>
+        </div>
+    );
+}

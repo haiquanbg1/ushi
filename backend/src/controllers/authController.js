@@ -2,7 +2,9 @@
 const { StatusCodes } = require("http-status-codes");
 const { successResponse, errorResponse } = require("../utils/response");
 const { createAccessToken, createRefreshToken } = require("../utils/jwt");
-const userAccountService = require("../services/userAccountService");
+const userService = require("../services/userService");
+const roleService = require("../services/roleService");
+const customerService = require("../services/customerService");
 const ms = require("ms");
 
 // Cookie configuration
@@ -23,20 +25,20 @@ const REFRESH_TOKEN_CONFIG = {
     maxAge: ms("7d") // 7 ngày
 };
 
-class AuthController {
+module.exports = {
     /**
      * Đăng ký người dùng mới
      */
-    async register(req, res) {
+    register: async (req, res) => {
         try {
-            const { username, password, confirmPassword, roleId = null } = req.body;
+            const { username, phone, password, confirmPassword, role = null } = req.body;
 
             // Validation
-            if (!username || !password || !confirmPassword) {
+            if (!phone || !password || !confirmPassword) {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Username, password, and confirm password are required"
+                    "Phone, password are required"
                 );
             }
 
@@ -56,55 +58,51 @@ class AuthController {
                 );
             }
 
-            // Check if username already exists
-            const usernameExists = await userAccountService.checkUsernameExists(username);
-            if (usernameExists) {
+            // Check if phone already exists
+            const phoneExists = await userService.checkPhoneExists(phone);
+            if (phoneExists) {
                 return errorResponse(
                     res,
                     StatusCodes.CONFLICT,
-                    "Username already exists"
+                    "Phone already exists"
                 );
             }
+
+            const roleByName = await roleService.getRoleByName(role);
 
             // Create user data
             const userData = {
                 username,
+                phone,
                 password,
-                roleId: roleId || 3, // Default role (User/Employee) - adjust based on your role IDs
+                roleId: roleByName.id || 3,
                 isActive: true
             };
 
             // Create new user
-            const user = await userAccountService.createUserAccount(userData);
+            const user = await userService.createUser(userData);
+            const response = {
+                user: {
+                    id: user.id,
+                    phone: user.phone,
+                    role: user.role,
+                    isActive: user.isActive,
+                    createdAt: user.createdAt
+                },
+            }
 
-            // Create tokens for auto-login after registration
-            const accessToken = createAccessToken({ userId: user.id });
-            const refreshToken = createRefreshToken({ userId: user.id });
-
-            // Set cookies
-            res.cookie("accessToken", accessToken, ACCESS_TOKEN_CONFIG);
-            res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_CONFIG);
-            res.cookie("isLogin", "true", {
-                ...COOKIE_CONFIG,
-                httpOnly: false,
-                maxAge: ms("7d")
-            });
-
-            console.info(`New user registered: ${user.username}`);
+            if (role == "Customer") {
+                const customer = await customerService.create({ userId: user.id, fullName: username });
+                response.customer = {
+                    customerId: customer.id,
+                }
+            }
 
             return successResponse(
                 res,
                 StatusCodes.CREATED,
                 "Registration successful",
-                {
-                    user: {
-                        id: user.id,
-                        username: user.username,
-                        role: user.role,
-                        isActive: user.isActive,
-                        createdAt: user.createdAt
-                    }
-                }
+                response
             );
 
         } catch (error) {
@@ -132,26 +130,26 @@ class AuthController {
                 "Registration failed. Please try again."
             );
         }
-    }
+    },
 
     /**
      * Đăng nhập người dùng
      */
-    async login(req, res) {
+    login: async (req, res) => {
         try {
-            const { username, password } = req.body;
+            const { phone, password } = req.body;
 
             // Validation
-            if (!username || !password) {
+            if (!phone || !password) {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Username and password are required"
+                    "Phone and password are required"
                 );
             }
 
             // Authenticate user
-            const user = await userAccountService.authenticateUser(username, password);
+            const user = await userService.authenticateUser(phone, password);
 
             // Create tokens
             const accessToken = createAccessToken({ userId: user.id });
@@ -160,11 +158,6 @@ class AuthController {
             // Set cookies
             res.cookie("accessToken", accessToken, ACCESS_TOKEN_CONFIG);
             res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_CONFIG);
-            res.cookie("isLogin", "true", {
-                ...COOKIE_CONFIG,
-                httpOnly: false, // Để frontend có thể đọc
-                maxAge: ms("7d")
-            });
 
             // Log successful login
             console.info(`User ${user.username} logged in successfully`);
@@ -178,9 +171,8 @@ class AuthController {
                         id: user.id,
                         username: user.username,
                         role: user.role,
-                        employee: user.employee,
-                        isActive: user.isActive,
-                        lastLoginAt: user.lastLoginAt
+                        phone: user.phone,
+                        email: user.email,
                     }
                 }
             );
@@ -192,15 +184,15 @@ class AuthController {
             return errorResponse(
                 res,
                 StatusCodes.UNAUTHORIZED,
-                "Invalid username or password"
+                "Invalid phone or password"
             );
         }
-    }
+    },
 
     /**
      * Đăng xuất người dùng
      */
-    async logout(req, res) {
+    logout: async (req, res) => {
         try {
             const cookieOptions = {
                 httpOnly: true,
@@ -212,7 +204,6 @@ class AuthController {
             // Clear all auth cookies
             res.clearCookie("accessToken", cookieOptions);
             res.clearCookie("refreshToken", cookieOptions);
-            res.clearCookie("isLogin", { ...cookieOptions, httpOnly: false });
 
             console.info(`User ${req.user?.username || 'unknown'} logged out`);
 
@@ -230,14 +221,14 @@ class AuthController {
                 "An error occurred during logout"
             );
         }
-    }
+    },
 
     /**
      * Lấy thông tin người dùng hiện tại
      */
-    async me(req, res) {
+    me: async (req, res) => {
         try {
-            const user = await userAccountService.getUserAccountById(req.user.id);
+            const user = await userService.getUserById(req.user.id);
 
             return successResponse(
                 res,
@@ -248,7 +239,6 @@ class AuthController {
                         id: user.id,
                         username: user.username,
                         role: user.role,
-                        employee: user.employee,
                         isActive: user.isActive,
                         lastLoginAt: user.lastLoginAt,
                         createdAt: user.createdAt,
@@ -265,12 +255,12 @@ class AuthController {
                 "Failed to retrieve user information"
             );
         }
-    }
+    },
 
     /**
      * Đổi mật khẩu
      */
-    async changePassword(req, res) {
+    changePassword: async (req, res) => {
         try {
             const { oldPassword, newPassword, confirmPassword } = req.body;
 
@@ -300,7 +290,7 @@ class AuthController {
             }
 
             // Change password
-            await userAccountService.changePassword(req.user.id, oldPassword, newPassword);
+            await userService.changePassword(req.user.id, oldPassword, newPassword);
 
             console.info(`User ${req.user.username} changed password successfully`);
 
@@ -327,12 +317,12 @@ class AuthController {
                 "Failed to change password"
             );
         }
-    }
+    },
 
     /**
      * Refresh access token
      */
-    async refreshToken(req, res) {
+    refreshToken: async (req, res) => {
         try {
             const { refreshToken } = req.cookies;
 
@@ -359,12 +349,12 @@ class AuthController {
                 "Invalid refresh token"
             );
         }
-    }
+    },
 
     /**
      * Kiểm tra trạng thái đăng nhập
      */
-    async checkAuth(req, res) {
+    checkAuth: async (req, res) => {
         try {
             return successResponse(
                 res,
@@ -375,7 +365,9 @@ class AuthController {
                     user: {
                         id: req.user.id,
                         username: req.user.username,
-                        role: req.user.role
+                        role: req.user.role,
+                        phone: req.user.phone,
+                        email: req.user.email,
                     }
                 }
             );
@@ -388,12 +380,12 @@ class AuthController {
                 "User is not authenticated"
             );
         }
-    }
+    },
 
     /**
      * Reset mật khẩu (chỉ admin)
      */
-    async resetPassword(req, res) {
+    resetPassword: async (req, res) => {
         try {
             const { userId, newPassword } = req.body;
 
@@ -415,7 +407,7 @@ class AuthController {
             }
 
             // Reset password
-            await userAccountService.resetPassword(userId, newPassword);
+            await userService.resetPassword(userId, newPassword);
 
             console.info(`Admin ${req.user.username} reset password for user ID ${userId}`);
 
@@ -444,5 +436,3 @@ class AuthController {
         }
     }
 }
-
-module.exports = new AuthController();

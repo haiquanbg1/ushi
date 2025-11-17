@@ -19,21 +19,21 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
-      menuItemId: {
+      itemId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
-          model: 'MenuItems',
+          model: 'Items',
           key: 'id'
         },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
       },
-      variationId: {
+      comboId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
-          model: 'MenuVariations',
+          model: 'Combos',
           key: 'id'
         },
         onUpdate: 'CASCADE',
@@ -54,13 +54,10 @@ module.exports = {
       status: {
         type: Sequelize.ENUM('pending', 'preparing', 'ready', 'served', 'cancelled')
       },
-      createdAt: {
+      itemType: {
+        type: Sequelize.ENUM('menu_item', 'combo'),
         allowNull: false,
-        type: Sequelize.DATE
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
+        defaultValue: 'menu_item'
       }
     });
   },

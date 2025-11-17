@@ -1,4 +1,5 @@
-const { Invoice, Order } = require('../models');
+const { Invoice, Order, OrderDetail, Table } = require('../models');
+const { Op } = require('sequelize');
 
 class InvoiceService {
     async getAllInvoices() {
@@ -28,7 +29,53 @@ class InvoiceService {
 
     async createInvoice(invoiceData) {
         try {
-            return await Invoice.create(invoiceData);
+            // If orderId is provided, fetch order details to populate invoice
+            let order = null;
+            if (invoiceData.orderId) {
+                order = await Order.findByPk(invoiceData.orderId, {
+                    include: [
+                        { model: OrderDetail, as: 'orderDetails' }
+                    ]
+                });
+                
+                if (!order) {
+                    throw new Error('Order not found');
+                }
+
+                // Generate invoice number if not provided
+                if (!invoiceData.invoiceNumber) {
+                    const date = new Date();
+                    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+                    const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+                    invoiceData.invoiceNumber = `INV-${dateStr}-${randomNum}`;
+                }
+
+                // Calculate totals from order if not provided
+                if (!invoiceData.subTotal && order.totalAmount) {
+                    invoiceData.subTotal = order.totalAmount;
+                }
+                if (!invoiceData.totalAmount && order.totalAmount) {
+                    invoiceData.totalAmount = order.totalAmount;
+                }
+            }
+
+            const invoice = await Invoice.create(invoiceData);
+
+            // Update order status to 'completed' if order exists
+            if (order) {
+                await Order.update(
+                    { orderStatus: 'completed' },
+                    { where: { id: order.id } }
+                );
+
+                // Update table status to 'available' if tableId exists
+                if (order.tableId) {
+                    const TableService = require('./tableService');
+                    await TableService.updateTable(order.tableId, { status: 'available' });
+                }
+            }
+
+            return invoice;
         } catch (error) {
             throw new Error(`Error creating invoice: ${error.message}`);
         }

@@ -15,28 +15,20 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'customerId',
         as: 'orders'
       });
-      
-      // Customer has many Reservations
-      Customer.hasMany(models.Reservation, {
+
+      Customer.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
+
+      Customer.hasMany(models.CustomerPromotion, {
         foreignKey: 'customerId',
-        as: 'reservations'
+        as: 'customerPromotions'
       });
     }
   }
   Customer.init({
     fullName: DataTypes.STRING,
-    phone: {
-      type: DataTypes.STRING,
-      validate: {
-        is: /^[0-9]{10,15}$/
-      }
-    },
-    email: {
-      type: DataTypes.STRING,
-      validate: {
-        isEmail: true
-      }
-    },
     dateOfBirth: DataTypes.DATE,
     address: DataTypes.TEXT,
     city: DataTypes.STRING,
@@ -44,11 +36,10 @@ module.exports = (sequelize, DataTypes) => {
     customerType: DataTypes.ENUM('regular', 'vip', 'member', 'guest'),
     loyaltyPoints: DataTypes.INTEGER,
     totalSpent: DataTypes.DECIMAL,
-    lastVisit: DataTypes.DATE,
-    preferredContactMethod: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Customer',
+    timestamps: false,
   });
   return Customer;
 };

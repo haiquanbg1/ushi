@@ -18,31 +18,21 @@ module.exports = {
       price: {
         type: Sequelize.DECIMAL
       },
-      imageURL: {
+      image: {
         type: Sequelize.STRING
       },
       isActive: {
         type: Sequelize.BOOLEAN
       },
-      validFrom: {
-        type: Sequelize.DATE
-      },
-      validTo: {
-        type: Sequelize.DATE
-      },
-      minItems: {
-        type: Sequelize.INTEGER
-      },
-      maxItems: {
-        type: Sequelize.INTEGER
-      },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },

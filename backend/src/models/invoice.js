@@ -24,12 +24,12 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
       allowNull: false
     },
-    issueDate: DataTypes.DATE,
     customerName: DataTypes.STRING,
     customerTaxCode: DataTypes.STRING,
-    totalAmount: DataTypes.DECIMAL,
+    subTotal: DataTypes.DECIMAL,
     taxAmount: DataTypes.DECIMAL,
-    status: DataTypes.STRING
+    totalAmount: DataTypes.DECIMAL,
+    paymentMethod: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Invoice',

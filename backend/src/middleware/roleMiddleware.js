@@ -84,7 +84,7 @@ const requireManager = requireRole(['Admin', 'Manager']);
 /**
  * Middleware kiểm tra quyền user trở lên (tất cả authenticated users)
  */
-const requireUser = requireRole(['Admin', 'Manager', 'User', 'Employee']);
+const requireUser = requireRole(['Admin', 'Manager', 'Customer', 'Staff', 'Chef']);
 
 /**
  * Middleware kiểm tra owner hoặc admin

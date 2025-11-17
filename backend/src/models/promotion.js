@@ -10,15 +10,19 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      Promotion.hasMany(models.PromotionMenuItem, {
+      Promotion.hasMany(models.CustomerPromotion, {
         foreignKey: 'promotionId',
-        as: 'promotionMenuItems'
+        as: 'customerPromotions'
       });
     }
   }
   Promotion.init({
     name: DataTypes.STRING,
-    type: DataTypes.STRING,
+    type: {
+      type: DataTypes.ENUM('percent', 'amount'),
+      allowNull: false,
+      defaultValue: 'percent'
+    },
     value: DataTypes.DECIMAL,
     minOrderAmount: DataTypes.DECIMAL,
     maxDiscount: DataTypes.DECIMAL,

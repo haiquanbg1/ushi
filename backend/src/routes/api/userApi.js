@@ -24,7 +24,7 @@ const {
 const userController = require('../../controllers/userController');
 
 /**
- * @route GET /api/users
+ * @route GET /api/v1/users
  * @desc Get all users
  * @access Private (Manager+ only)
  */
@@ -36,7 +36,7 @@ router.get('/',
 );
 
 /**
- * @route GET /api/users/active
+ * @route GET /api/v1/users/active
  * @desc Get all active users
  * @access Private (Manager+ only)
  */
@@ -48,7 +48,7 @@ router.get('/active',
 );
 
 /**
- * @route GET /api/users/inactive
+ * @route GET /api/v1/v1/users/inactive
  * @desc Get all inactive users
  * @access Private (Admin only)
  */
@@ -60,7 +60,7 @@ router.get('/inactive',
 );
 
 /**
- * @route GET /api/users/stats
+ * @route GET /api/v1/v1/users/stats
  * @desc Get user statistics
  * @access Private (Admin only)
  */
@@ -72,7 +72,7 @@ router.get('/stats',
 );
 
 /**
- * @route GET /api/users/role/:roleId
+ * @route GET /api/v1/v1/users/role/:roleId
  * @desc Get users by role ID
  * @access Private (Manager+ only)
  */
@@ -85,7 +85,7 @@ router.get('/role/:roleId',
 );
 
 /**
- * @route GET /api/users/:id
+ * @route GET /api/v1/v1/users/:id
  * @desc Get user by ID
  * @access Private (Owner or Admin)
  */
@@ -98,7 +98,7 @@ router.get('/:id',
 );
 
 /**
- * @route POST /api/users
+ * @route POST /api/v1/users
  * @desc Create new user
  * @access Private (Admin only)
  */
@@ -112,7 +112,7 @@ router.post('/',
 );
 
 /**
- * @route PUT /api/users/:id
+ * @route PUT /api/v1/users/:id
  * @desc Update user
  * @access Private (Owner or Admin)
  */
@@ -127,7 +127,7 @@ router.put('/:id',
 );
 
 /**
- * @route DELETE /api/users/:id
+ * @route DELETE /api/v1/users/:id
  * @desc Delete user
  * @access Private (Admin only)
  */
@@ -140,7 +140,7 @@ router.delete('/:id',
 );
 
 /**
- * @route PATCH /api/users/:id/activate
+ * @route PATCH /api/v1/users/:id/activate
  * @desc Activate user account
  * @access Private (Admin only)
  */
@@ -153,7 +153,7 @@ router.patch('/:id/activate',
 );
 
 /**
- * @route PATCH /api/users/:id/deactivate
+ * @route PATCH /api/v1/users/:id/deactivate
  * @desc Deactivate user account
  * @access Private (Admin only)
  */

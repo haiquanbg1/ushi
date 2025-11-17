@@ -15,7 +15,7 @@ module.exports = {
       description: {
         type: Sequelize.TEXT
       },
-      imageURL: {
+      image: {
         type: Sequelize.STRING
       },
       sortOrder: {
@@ -26,11 +26,13 @@ module.exports = {
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },

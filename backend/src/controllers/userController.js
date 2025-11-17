@@ -3,7 +3,7 @@ const { StatusCodes } = require("http-status-codes");
 const { successResponse, errorResponse } = require("../utils/response");
 const userService = require("../services/userService");
 
-class UserController {
+module.exports = {
     /**
      * Lấy danh sách tất cả users
      */
@@ -24,7 +24,6 @@ class UserController {
                 const searchTerm = search.toLowerCase();
                 users = users.filter(user =>
                     user.username.toLowerCase().includes(searchTerm) ||
-                    (user.employee?.fullName && user.employee.fullName.toLowerCase().includes(searchTerm)) ||
                     (user.role?.roleName && user.role.roleName.toLowerCase().includes(searchTerm))
                 );
             }
@@ -49,7 +48,7 @@ class UserController {
                 "Failed to retrieve users"
             );
         }
-    }
+    },
 
     /**
      * Lấy danh sách users active
@@ -73,7 +72,7 @@ class UserController {
                 "Failed to retrieve active users"
             );
         }
-    }
+    },
 
     /**
      * Lấy danh sách users inactive
@@ -97,7 +96,7 @@ class UserController {
                 "Failed to retrieve inactive users"
             );
         }
-    }
+    },
 
     /**
      * Lấy thống kê users
@@ -121,7 +120,7 @@ class UserController {
                 "Failed to retrieve user statistics"
             );
         }
-    }
+    },
 
     /**
      * Lấy users theo role ID
@@ -146,7 +145,7 @@ class UserController {
                 "Failed to retrieve users by role"
             );
         }
-    }
+    },
 
     /**
      * Lấy user theo ID
@@ -180,7 +179,7 @@ class UserController {
                 "Failed to retrieve user"
             );
         }
-    }
+    },
 
     /**
      * Tạo user mới
@@ -229,7 +228,7 @@ class UserController {
                 "Failed to create user"
             );
         }
-    }
+    },
 
     /**
      * Cập nhật user
@@ -285,7 +284,7 @@ class UserController {
                 "Failed to update user"
             );
         }
-    }
+    },
 
     /**
      * Xóa user
@@ -330,7 +329,7 @@ class UserController {
                 "Failed to delete user"
             );
         }
-    }
+    },
 
     /**
      * Kích hoạt user
@@ -366,7 +365,7 @@ class UserController {
                 "Failed to activate user"
             );
         }
-    }
+    },
 
     /**
      * Vô hiệu hóa user
@@ -414,5 +413,3 @@ class UserController {
         }
     }
 }
-
-module.exports = new UserController();

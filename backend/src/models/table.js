@@ -10,31 +10,20 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // Table belongs to Area
-      Table.belongsTo(models.Area, {
-        foreignKey: 'areaId',
-        as: 'area'
-      });
-      
       // Table has many Orders
       Table.hasMany(models.Order, {
         foreignKey: 'tableId',
         as: 'orders'
       });
-      
-      // Table has many ReservationTables
-      Table.hasMany(models.ReservationTable, {
-        foreignKey: 'tableId',
-        as: 'reservationTables'
-      });
     }
   }
   Table.init({
-    areaId: DataTypes.INTEGER,
     tableNumber: DataTypes.STRING,
     capacity: DataTypes.INTEGER,
-    status: DataTypes.ENUM('available', 'occupied', 'reserved', 'cleaning', 'maintenance'),
-    qrCode: DataTypes.STRING,
+    status: {
+      type: DataTypes.ENUM('available', 'occupied', 'reserved', 'cleaning', 'maintenance'),
+      defaultValue: 'available'
+    },
     isActive: DataTypes.BOOLEAN
   }, {
     sequelize,

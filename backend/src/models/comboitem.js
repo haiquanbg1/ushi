@@ -15,20 +15,20 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'comboId',
         as: 'combo'
       });
-      
-      // ComboItem belongs to MenuItem
-      ComboItem.belongsTo(models.MenuItem, {
-        foreignKey: 'menuItemId',
-        as: 'menuItem'
+
+      // ComboItem belongs to Item
+      ComboItem.belongsTo(models.Item, {
+        foreignKey: 'itemId',
+        as: 'item'
       });
     }
   }
   ComboItem.init({
-    comboId: DataTypes.INTEGER,
-    menuItemId: DataTypes.INTEGER,
-    quantity: DataTypes.INTEGER,
-    isRequired: DataTypes.BOOLEAN,
-    isDefault: DataTypes.BOOLEAN
+    comboId: { type: DataTypes.INTEGER, allowNull: false },
+    itemId: { type: DataTypes.INTEGER, allowNull: false },
+    quantity: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+    isRequired: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    isDefault: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
   }, {
     sequelize,
     modelName: 'ComboItem',

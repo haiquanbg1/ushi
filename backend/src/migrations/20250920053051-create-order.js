@@ -12,49 +12,27 @@ module.exports = {
       orderNumber: {
         type: Sequelize.STRING
       },
-        customerId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'Customers',
-            key: 'id'
-          },
-          onUpdate: 'CASCADE',
-          onDelete: 'RESTRICT'
+      customerId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Customers',
+          key: 'id'
         },
-        tableId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'Tables',
-            key: 'id'
-          },
-          onUpdate: 'CASCADE',
-          onDelete: 'RESTRICT'
-        },
-        employeeId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'Employees',
-            key: 'id'
-          },
-          onUpdate: 'CASCADE',
-          onDelete: 'RESTRICT'
-        },
-      orderType: {
-        type: Sequelize.ENUM('dine-in', 'take-away', 'delivery')
+        onUpdate: 'CASCADE',
+        onDelete: 'RESTRICT'
       },
-      orderTime: {
-        type: Sequelize.DATE
-      },
-      estimatedTime: {
-        type: Sequelize.INTEGER
+      tableId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Tables',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'RESTRICT'
       },
       subTotal: {
-        type: Sequelize.DECIMAL
-      },
-      taxAmount: {
         type: Sequelize.DECIMAL
       },
       serviceCharge: {
@@ -66,31 +44,21 @@ module.exports = {
       totalAmount: {
         type: Sequelize.DECIMAL
       },
-      paymentStatus: {
-        type: Sequelize.ENUM('pending', 'confirmed', 'completed', 'cancelled')
-      },
       orderStatus: {
         type: Sequelize.ENUM('pending', 'confirmed', 'completed', 'cancelled')
       },
       customerNotes: {
         type: Sequelize.TEXT
       },
-      kitchenNotes: {
-        type: Sequelize.TEXT
-      },
-      deliveryAddress: {
-        type: Sequelize.TEXT
-      },
-      deliveryFee: {
-        type: Sequelize.DECIMAL
-      },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },

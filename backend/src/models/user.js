@@ -16,15 +16,26 @@ module.exports = (sequelize, DataTypes) => {
         as: 'role'
       });
 
-      // User has one Employee
-      User.hasOne(models.Employee, {
+      User.hasOne(models.Customer, {
         foreignKey: 'userId',
-        as: 'employee'
+        as: 'customer'
       });
     }
   }
   User.init({
     username: DataTypes.STRING,
+    phone: {
+      type: DataTypes.STRING,
+      validate: {
+        is: /^[0-9]{10,15}$/
+      }
+    },
+    email: {
+      type: DataTypes.STRING,
+      validate: {
+        isEmail: true
+      }
+    },
     password: DataTypes.STRING,
     roleId: DataTypes.INTEGER,
     isActive: DataTypes.BOOLEAN,

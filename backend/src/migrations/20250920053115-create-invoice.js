@@ -22,31 +22,33 @@ module.exports = {
       invoiceNumber: {
         type: Sequelize.STRING
       },
-      issueDate: {
-        type: Sequelize.DATE
-      },
       customerName: {
         type: Sequelize.STRING
       },
       customerTaxCode: {
         type: Sequelize.STRING
       },
-      totalAmount: {
+      subTotal: {
         type: Sequelize.DECIMAL
       },
       taxAmount: {
         type: Sequelize.DECIMAL
       },
-      status: {
+      totalAmount: {
+        type: Sequelize.DECIMAL
+      },
+      paymentMethod: {
         type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },

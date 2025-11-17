@@ -1,4 +1,4 @@
-const { Payment, Order, Employee } = require('../models');
+const { Payment, Order } = require('../models');
 
 class PaymentService {
     async getAllPayments() {
@@ -6,7 +6,6 @@ class PaymentService {
             return await Payment.findAll({
                 include: [
                     { model: Order, as: 'order' },
-                    { model: Employee, as: 'processedByEmployee' }
                 ],
                 order: [['createdAt', 'DESC']]
             });
@@ -20,7 +19,6 @@ class PaymentService {
             const payment = await Payment.findByPk(id, {
                 include: [
                     { model: Order, as: 'order' },
-                    { model: Employee, as: 'processedByEmployee' }
                 ]
             });
             if (!payment) {
@@ -74,7 +72,6 @@ class PaymentService {
                 where: { orderId },
                 include: [
                     { model: Order, as: 'order' },
-                    { model: Employee, as: 'processedByEmployee' }
                 ],
                 order: [['createdAt', 'DESC']]
             });
@@ -89,7 +86,6 @@ class PaymentService {
                 where: { paymentStatus: status },
                 include: [
                     { model: Order, as: 'order' },
-                    { model: Employee, as: 'processedByEmployee' }
                 ],
                 order: [['createdAt', 'DESC']]
             });
@@ -110,6 +106,46 @@ class PaymentService {
             return await this.getPaymentById(id);
         } catch (error) {
             throw new Error(`Error updating payment status: ${error.message}`);
+        }
+    }
+
+    async confirmPayment(id, paymentData) {
+        try {
+            const payment = await Payment.findByPk(id, {
+                include: [{ model: Order, as: 'order' }]
+            });
+
+            if (!payment) {
+                throw new Error('Payment not found');
+            }
+
+            // Update payment with confirmation data
+            const updateData = {
+                paymentStatus: 'paid',
+                paidAmount: paymentData.paidAmount || payment.amount,
+                changeAmount: paymentData.changeAmount || 0,
+                paymentMethod: paymentData.paymentMethod || payment.paymentMethod,
+                paymentTime: new Date()
+            };
+
+            const [updatedCount] = await Payment.update(updateData, {
+                where: { id }
+            });
+
+            if (updatedCount === 0) {
+                throw new Error('Payment not found');
+            }
+
+            // Update order status to 'completed'
+            if (payment.orderId) {
+                const OrderService = require('./orderService');
+                await OrderService.updateOrderStatus(payment.orderId, 'completed');
+            }
+
+            return await this.getPaymentById(id);
+        } catch (error) {
+            console.error('Error confirming payment:', error);
+            throw new Error(`Error confirming payment: ${error.message}`);
         }
     }
 }

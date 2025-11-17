@@ -9,16 +9,16 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-        orderId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'Orders',
-            key: 'id'
-          },
-          onUpdate: 'CASCADE',
-          onDelete: 'RESTRICT'
+      orderId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Orders',
+          key: 'id'
         },
+        onUpdate: 'CASCADE',
+        onDelete: 'RESTRICT'
+      },
       paymentMethod: {
         type: Sequelize.STRING
       },
@@ -34,32 +34,15 @@ module.exports = {
       paymentStatus: {
         type: Sequelize.ENUM('pending', 'paid', 'failed', 'refunded', 'cancelled')
       },
-      transactionId: {
-        type: Sequelize.STRING
-      },
-      paymentGateway: {
-        type: Sequelize.STRING
-      },
-      paymentTime: {
-        type: Sequelize.DATE
-      },
-        processedByEmployeeId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: 'Employees',
-            key: 'id'
-          },
-          onUpdate: 'CASCADE',
-          onDelete: 'RESTRICT'
-        },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },

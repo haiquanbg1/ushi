@@ -10,23 +10,17 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // Category has many MenuItems
-      Category.hasMany(models.MenuItem, {
+      // Category has many Items
+      Category.hasMany(models.Item, {
         foreignKey: 'categoryId',
-        as: 'menuItems'
-      });
-      
-      // Category has many PromotionMenuItems
-      Category.hasMany(models.PromotionMenuItem, {
-        foreignKey: 'categoryId',
-        as: 'promotionMenuItems'
+        as: 'items'
       });
     }
   }
   Category.init({
     categoryName: DataTypes.STRING,
     description: DataTypes.TEXT,
-    imageURL: DataTypes.STRING,
+    image: DataTypes.STRING,
     sortOrder: DataTypes.INTEGER,
     isActive: DataTypes.BOOLEAN
   }, {

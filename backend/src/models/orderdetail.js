@@ -15,32 +15,59 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'orderId',
         as: 'order'
       });
-      
-      // OrderDetail belongs to MenuItem
-      OrderDetail.belongsTo(models.MenuItem, {
-        foreignKey: 'menuItemId',
-        as: 'menuItem'
+
+      // OrderDetail belongs to Item (optional - cho món lẻ)
+      OrderDetail.belongsTo(models.Item, {
+        foreignKey: 'itemId',
+        as: 'item'
       });
-      
-      // OrderDetail belongs to MenuVariation
-      OrderDetail.belongsTo(models.MenuVariation, {
-        foreignKey: 'variationId',
-        as: 'variation'
+
+      // OrderDetail belongs to Combo (optional - cho combo)
+      OrderDetail.belongsTo(models.Combo, {
+        foreignKey: 'comboId',
+        as: 'combo'
       });
     }
   }
   OrderDetail.init({
     orderId: DataTypes.INTEGER,
-    menuItemId: DataTypes.INTEGER,
-    variationId: DataTypes.INTEGER,
+    itemId: {
+      type: DataTypes.INTEGER,
+      allowNull: true  // Cho phép null khi là combo
+    },
+    comboId: {
+      type: DataTypes.INTEGER,
+      allowNull: true  // Cho phép null khi là món lẻ
+    },
     quantity: DataTypes.INTEGER,
     unitPrice: DataTypes.DECIMAL,
     totalPrice: DataTypes.DECIMAL,
     specialInstructions: DataTypes.TEXT,
-    status: DataTypes.ENUM('pending', 'preparing', 'ready', 'served', 'cancelled')
+    status: {
+      type: DataTypes.ENUM('pending', 'preparing', 'ready', 'served', 'cancelled'),
+      defaultValue: 'pending'
+    },
+    itemType: {
+      type: DataTypes.ENUM('menu_item', 'combo'),
+      allowNull: false,
+      defaultValue: 'menu_item',
+      comment: 'Loại item: món lẻ hoặc combo'
+    }
   }, {
     sequelize,
     modelName: 'OrderDetail',
+    validate: {
+      // Đảm bảo hoặc có itemId hoặc có comboId
+      eitherItemOrCombo() {
+        if (!this.itemId && !this.comboId) {
+          throw new Error('OrderDetail phải có itemId hoặc comboId');
+        }
+        if (this.itemId && this.comboId) {
+          throw new Error('OrderDetail không thể có cả itemId và comboId');
+        }
+      }
+    },
+    timestamps: false,
   });
   return OrderDetail;
 };

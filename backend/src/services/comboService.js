@@ -1,4 +1,4 @@
-const { Combo, ComboItem, MenuItem, OrderCombo } = require('../models');
+const { Combo, ComboItem, Item, OrderCombo } = require('../models');
 
 class ComboService {
     async getAllCombos() {
@@ -8,8 +8,8 @@ class ComboService {
                     model: ComboItem,
                     as: 'comboItems',
                     include: [{
-                        model: MenuItem,
-                        as: 'menuItem'
+                        model: Item,
+                        as: 'item'
                     }]
                 }],
                 order: [['createdAt', 'DESC']]
@@ -26,8 +26,8 @@ class ComboService {
                     model: ComboItem,
                     as: 'comboItems',
                     include: [{
-                        model: MenuItem,
-                        as: 'menuItem'
+                        model: Item,
+                        as: 'item'
                     }]
                 }]
             });
@@ -89,8 +89,8 @@ class ComboService {
                     model: ComboItem,
                     as: 'comboItems',
                     include: [{
-                        model: MenuItem,
-                        as: 'menuItem'
+                        model: Item,
+                        as: 'item'
                     }]
                 }]
             });

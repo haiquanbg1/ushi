@@ -1,4 +1,4 @@
-const { ComboItem, Combo, MenuItem } = require('../models');
+const { ComboItem, Combo, Item } = require('../models');
 
 class ComboItemService {
 	async getAllComboItems() {
@@ -6,7 +6,7 @@ class ComboItemService {
 			return await ComboItem.findAll({
 				include: [
 					{ model: Combo, as: 'combo' },
-					{ model: MenuItem, as: 'menuItem' }
+					{ model: Item, as: 'item' }
 				]
 			});
 		} catch (error) {
@@ -19,7 +19,7 @@ class ComboItemService {
 			const comboItem = await ComboItem.findByPk(id, {
 				include: [
 					{ model: Combo, as: 'combo' },
-					{ model: MenuItem, as: 'menuItem' }
+					{ model: Item, as: 'item' }
 				]
 			});
 			if (!comboItem) {
@@ -71,7 +71,7 @@ class ComboItemService {
 		try {
 			return await ComboItem.findAll({
 				where: { comboId },
-				include: [{ model: MenuItem, as: 'menuItem' }]
+				include: [{ model: Item, as: 'item' }]
 			});
 		} catch (error) {
 			throw new Error(`Error fetching combo items by combo ID: ${error.message}`);
