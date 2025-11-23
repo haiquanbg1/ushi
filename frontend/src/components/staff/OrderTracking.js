@@ -50,9 +50,14 @@ export default function OrderTracking() {
         }
     };
 
-    const updateItemStatus = async (orderId, itemId, newStatus) => {
+    const updateItemStatus = async (orderId, orderDetailId, newStatus, isCombo = false) => {
         try {
-            await staffAPI.updateOrderItemStatus(itemId, newStatus);
+            // Check if it's an item or combo and call the appropriate API
+            if (isCombo) {
+                await staffAPI.updateOrderComboStatus(orderDetailId, newStatus);
+            } else {
+                await staffAPI.updateOrderItemStatus(orderDetailId, newStatus);
+            }
 
             // Cập nhật state local
             setOrders(prev =>
@@ -61,7 +66,7 @@ export default function OrderTracking() {
                         ? {
                             ...order,
                             items: order.items.map(i =>
-                                i.id === itemId ? { ...i, status: newStatus } : i
+                                i.id === orderDetailId ? { ...i, status: newStatus } : i
                             )
                         }
                         : order
@@ -72,7 +77,7 @@ export default function OrderTracking() {
             const order = orders.find(o => o.id === orderId);
             if (order) {
                 const allItemsServed = order.items.every(
-                    item => item.id === itemId ? (newStatus === 'served' || newStatus === 'completed') : (item.status === 'served' || item.status === 'completed')
+                    item => item.id === orderDetailId ? (newStatus === 'served' || newStatus === 'completed') : (item.status === 'served' || item.status === 'completed')
                 );
 
                 if (allItemsServed && (newStatus === 'served' || newStatus === 'completed')) {
@@ -277,44 +282,50 @@ export default function OrderTracking() {
                                     <div className="mb-3 max-h-48 overflow-y-auto">
                                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Món ăn:</h4>
                                         <ul className="space-y-2">
-                                            {(order.items || []).map((item) => (
-                                                <li key={item.item.id} className="text-sm border-b pb-2">
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <span className="font-medium">
-                                                            {item.quantity}x {item.item.name}
-                                                        </span>
-
-                                                        {item.status !== 'served' && item.status !== 'completed' ? (
-                                                            <button
-                                                                onClick={() =>
-                                                                    updateItemStatus(order.id, item.item.id, getNextStatus(item.status || null))
-                                                                }
-                                                                className={`px-2 py-1 rounded-lg text-xs font-semibold text-white transition ${item.status === 'pending'
-                                                                    ? 'bg-blue-500 hover:bg-blue-600'
-                                                                    : item.status === 'preparing'
-                                                                        ? 'bg-green-500 hover:bg-green-600'
-                                                                        : 'bg-gray-500 hover:bg-gray-600'
-                                                                    }`}
-                                                            >
-                                                                {item.status === 'pending' && '▶ Bắt đầu'}
-                                                                {item.status === 'preparing' && '✓ Xong món'}
-                                                                {item.status === 'ready' && '✓ Đã phục vụ'}
-                                                            </button>
-                                                        ) : (
-                                                            <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-300">
-                                                                Đã phục vụ
+                                            {(order.items || []).map((item) => {
+                                                const isCombo = !!item.comboId || !!item.combo || (item.itemType === 'combo');
+                                                const itemName = isCombo
+                                                    ? (item.combo?.name || `Combo #${item.comboId}`)
+                                                    : (item.item?.name || `Item #${item.itemId}`);
+                                                return (
+                                                    <li key={item.id} className="text-sm border-b pb-2">
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <span className="font-medium">
+                                                                {item.quantity}x {itemName}
                                                             </span>
-                                                        )}
-                                                    </div>
 
-                                                    {item.specialInstructions && (
-                                                        <p className="text-xs text-gray-600 italic">Ghi chú: {item.specialInstructions}</p>
-                                                    )}
-                                                    <p className="text-xs text-gray-500">
-                                                        {item.unitPrice?.toLocaleString('vi-VN')}đ
-                                                    </p>
-                                                </li>
-                                            ))}
+                                                            {item.status !== 'served' && item.status !== 'completed' ? (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        updateItemStatus(order.id, item.id, getNextStatus(item.status || null), isCombo)
+                                                                    }
+                                                                    className={`px-2 py-1 rounded-lg text-xs font-semibold text-white transition ${item.status === 'pending'
+                                                                        ? 'bg-blue-500 hover:bg-blue-600'
+                                                                        : item.status === 'preparing'
+                                                                            ? 'bg-green-500 hover:bg-green-600'
+                                                                            : 'bg-gray-500 hover:bg-gray-600'
+                                                                        }`}
+                                                                >
+                                                                    {item.status === 'pending' && '▶ Bắt đầu'}
+                                                                    {item.status === 'preparing' && '✓ Xong món'}
+                                                                    {item.status === 'ready' && '✓ Đã phục vụ'}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-300">
+                                                                    Đã phục vụ
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {item.specialInstructions && (
+                                                            <p className="text-xs text-gray-600 italic">Ghi chú: {item.specialInstructions}</p>
+                                                        )}
+                                                        <p className="text-xs text-gray-500">
+                                                            {item.unitPrice?.toLocaleString('vi-VN')}đ
+                                                        </p>
+                                                    </li>
+                                                );
+                                            })}
                                         </ul>
                                     </div>
 
@@ -342,74 +353,80 @@ export default function OrderTracking() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch">
-                            {filteredItems.map((item) => (
-                                <div
-                                    key={`${item.orderId}-${item.item.id}`}
-                                    className={`rounded-lg shadow-md p-4 border-2 ${getStatusColor(item.status)} flex flex-col h-full`}
-                                >
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-bold text-gray-800">{item.item.name}</h3>
-                                            <p className="text-2xl font-bold text-gray-900 mt-1">x{item.quantity}</p>
-                                        </div>
-                                        <span
-                                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(
-                                                item.status
-                                            )}`}
-                                        >
-                                            {getStatusText(item.status)}
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-2 mb-4">
-                                        <div className="flex items-center text-sm">
-                                            <span className="font-semibold text-gray-700 mr-2">Bàn:</span>
-                                            <span className="text-lg font-bold text-blue-600">{item.tableNumber}</span>
-                                        </div>
-
-                                        <div className="text-sm text-gray-600">
-                                            <span className="font-semibold">Thời gian:</span>{' '}
-                                            {new Date(item.orderCreatedAt).toLocaleTimeString('vi-VN')}
-                                        </div>
-
-                                        {item.note && (
-                                            <div className="p-2 bg-yellow-50 border border-yellow-200 rounded">
-                                                <p className="text-sm text-yellow-800">
-                                                    <span className="font-semibold">Yêu cầu:</span> {item.specialInstructions}
-                                                </p>
+                            {filteredItems.map((item) => {
+                                const isCombo = !!item.comboId || !!item.combo || (item.itemType === 'combo');
+                                const itemName = isCombo
+                                    ? (item.combo?.name || `Combo #${item.comboId}`)
+                                    : (item.item?.name || `Item #${item.itemId}`);
+                                return (
+                                    <div
+                                        key={`${item.orderId}-${item.id}`}
+                                        className={`rounded-lg shadow-md p-4 border-2 ${getStatusColor(item.status)} flex flex-col h-full`}
+                                    >
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-bold text-gray-800">{itemName}</h3>
+                                                <p className="text-2xl font-bold text-gray-900 mt-1">x{item.quantity}</p>
                                             </div>
-                                        )}
-
-                                        {item.customerNotes && (
-                                            <div className="p-2 bg-orange-50 border border-orange-200 rounded">
-                                                <p className="text-sm text-orange-800">
-                                                    <span className="font-semibold">Ghi chú đơn:</span> {item.customerNotes}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        <div className="text-sm font-semibold text-gray-700">
-                                            Giá: {(item.unitPrice * item.quantity).toLocaleString('vi-VN')}đ
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(
+                                                    item.status
+                                                )}`}
+                                            >
+                                                {getStatusText(item.status)}
+                                            </span>
                                         </div>
-                                    </div>
 
-                                    {item.status !== 'served' && item.status !== 'completed' && (
-                                        <button
-                                            onClick={() => updateItemStatus(item.orderId, item.item.id, getNextStatus(item.status))}
-                                            className={`mt-auto w-full px-4 py-2 rounded-lg font-semibold text-white transition ${item.status === 'pending'
-                                                ? 'bg-blue-500 hover:bg-blue-600'
-                                                : item.status === 'preparing'
-                                                    ? 'bg-green-500 hover:bg-green-600'
-                                                    : 'bg-gray-500 hover:bg-gray-600'
-                                                }`}
-                                        >
-                                            {item.status === 'pending' && '▶ Bắt đầu làm'}
-                                            {item.status === 'preparing' && '✓ Đánh dấu xong'}
-                                            {item.status === 'ready' && '✓ Đã phục vụ'}
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
+                                        <div className="space-y-2 mb-4">
+                                            <div className="flex items-center text-sm">
+                                                <span className="font-semibold text-gray-700 mr-2">Bàn:</span>
+                                                <span className="text-lg font-bold text-blue-600">{item.tableNumber}</span>
+                                            </div>
+
+                                            <div className="text-sm text-gray-600">
+                                                <span className="font-semibold">Thời gian:</span>{' '}
+                                                {new Date(item.orderCreatedAt).toLocaleTimeString('vi-VN')}
+                                            </div>
+
+                                            {item.note && (
+                                                <div className="p-2 bg-yellow-50 border border-yellow-200 rounded">
+                                                    <p className="text-sm text-yellow-800">
+                                                        <span className="font-semibold">Yêu cầu:</span> {item.specialInstructions}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {item.customerNotes && (
+                                                <div className="p-2 bg-orange-50 border border-orange-200 rounded">
+                                                    <p className="text-sm text-orange-800">
+                                                        <span className="font-semibold">Ghi chú đơn:</span> {item.customerNotes}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <div className="text-sm font-semibold text-gray-700">
+                                                Giá: {(item.unitPrice * item.quantity).toLocaleString('vi-VN')}đ
+                                            </div>
+                                        </div>
+
+                                        {item.status !== 'served' && item.status !== 'completed' && (
+                                            <button
+                                                onClick={() => updateItemStatus(item.orderId, item.id, getNextStatus(item.status), isCombo)}
+                                                className={`mt-auto w-full px-4 py-2 rounded-lg font-semibold text-white transition ${item.status === 'pending'
+                                                    ? 'bg-blue-500 hover:bg-blue-600'
+                                                    : item.status === 'preparing'
+                                                        ? 'bg-green-500 hover:bg-green-600'
+                                                        : 'bg-gray-500 hover:bg-gray-600'
+                                                    }`}
+                                            >
+                                                {item.status === 'pending' && '▶ Bắt đầu làm'}
+                                                {item.status === 'preparing' && '✓ Đánh dấu xong'}
+                                                {item.status === 'ready' && '✓ Đã phục vụ'}
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </>

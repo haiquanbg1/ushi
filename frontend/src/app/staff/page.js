@@ -46,7 +46,7 @@ export default function StaffPage() {
                     >
                         Theo dõi Đơn hàng
                     </button>
-                    <button
+                    {/* <button
                         onClick={() => setActiveTab('payments')}
                         className={`px-4 py-2 rounded-lg ${activeTab === 'payments'
                             ? 'bg-blue-500 text-white'
@@ -54,12 +54,12 @@ export default function StaffPage() {
                             }`}
                     >
                         Xác nhận Thanh toán
-                    </button>
+                    </button> */}
                 </div>
 
                 {activeTab === 'tables' && <TableManagement />}
                 {activeTab === 'orders' && <OrderTracking />}
-                {activeTab === 'payments' && <PaymentConfirmation />}
+                {/* {activeTab === 'payments' && <PaymentConfirmation />} */}
             </div>
         </ProtectedRoute>
     );

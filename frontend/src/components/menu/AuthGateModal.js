@@ -27,7 +27,10 @@ export default function AuthGateModal({ open, onClose }) {
         if (form.password !== form.confirmPassword) return setErr('Mật khẩu nhập lại không khớp.');
         const r = await auth.register({ username: form.username.trim(), phone, password: form.password, confirmPassword: form.confirmPassword, role: "Customer" });
         if (!r?.success) return setErr(r?.error || 'Đăng ký thất bại');
-        onClose();
+        // Switch to login tab after successful registration
+        setTab('login');
+        setForm({ username: '', phone: form.phone, password: '', confirmPassword: '' }); // Clear form but keep phone
+        setErr(''); // Clear any errors
     };
 
     if (!open) return null;

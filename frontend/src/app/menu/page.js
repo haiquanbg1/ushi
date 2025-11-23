@@ -234,6 +234,7 @@ export default function Page() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [loggedInCustomerId, setLoggedInCustomerId] = useState(null);
 
     const totalQty = useMemo(
         () => cart.items.reduce((s, i) => s + i.quantity, 0),
@@ -281,25 +282,31 @@ export default function Page() {
                         }
 
                         tableStore.setCustomer(customer.id);
+                        setLoggedInCustomerId(customer.id); // Store for history panel
                         setAuthInitialized(true);
                         await fillCartFromServer(customer.id, cart, false);
                     } else {
                         // User exists but no customer record, default to guest
                         tableStore.setCustomer(1);
+                        setLoggedInCustomerId(null);
                         setAuthInitialized(true);
                     }
                 } catch (err) {
                     console.error('Error getting customer:', err);
                     // Default to guest customer on error
                     tableStore.setCustomer(1);
+                    setLoggedInCustomerId(null);
                     setAuthInitialized(true);
                 }
             } else {
                 // Not logged in - use guest mode (no customer ID needed)
                 tableStore.setCustomer(1);
+                setLoggedInCustomerId(null);
                 setAuthInitialized(true);
                 // Load cart from stored order ID if available
                 await fillCartFromServer(1, cart, true);
+
+                setShowAuthModal(true);
             }
 
             setSessionChecked(true);
@@ -336,6 +343,7 @@ export default function Page() {
                 if (!ok) return;
             }
             await auth.logout?.();
+            setLoggedInCustomerId(null); // Clear logged-in customer ID on logout
 
             // Clear discount codes and guest order ID from localStorage
             localStorage.removeItem('applied-discount-code');
@@ -375,6 +383,7 @@ export default function Page() {
                 await transferGuestOrdersToUser(customerId, cart, tableStore.tableId);
 
                 tableStore.setCustomer(customerId);
+                setLoggedInCustomerId(customerId); // Store for history panel
                 setAuthInitialized(true);
                 await fillCartFromServer(customerId, cart, false);
                 pushToast({
@@ -387,6 +396,7 @@ export default function Page() {
         } catch (err) {
             console.error('Error creating customer:', err);
             tableStore.setCustomer(1);
+            setLoggedInCustomerId(null);
             setAuthInitialized(true);
             pushToast({
                 message: 'Có lỗi xảy ra, đang sử dụng tài khoản khách',
@@ -412,6 +422,7 @@ export default function Page() {
                     await transferGuestOrdersToUser(customer.id, cart, tableStore.tableId);
 
                     tableStore.setCustomer(customer.id);
+                    setLoggedInCustomerId(customer.id); // Store for history panel
                     setAuthInitialized(true);
                     await fillCartFromServer(customer.id, cart, false);
                     pushToast({
@@ -421,6 +432,7 @@ export default function Page() {
             } catch (err) {
                 console.error('Error getting customer after login:', err);
                 tableStore.setCustomer(1);
+                setLoggedInCustomerId(null);
                 setAuthInitialized(true);
             }
         } else if (action === 'register' && userData) {
@@ -668,7 +680,7 @@ export default function Page() {
                                     <HistoryPanel
                                         onOpenDetail={setSelectedOrder}
                                         auth={auth}
-                                        customerId={tableStore.customerId}
+                                        customerId={loggedInCustomerId}
                                     />
                                 ) : (
                                     <EmptyState

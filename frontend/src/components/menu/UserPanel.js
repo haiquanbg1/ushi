@@ -106,7 +106,7 @@ export default function UserPanel({ auth, addToast }) {
                         </div>
                         <div>
                             <label className="text-sm text-gray-600 mb-2 block">Số điện thoại</label>
-                            <input type="tel" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full p-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-orange-300 outline-none transition-all" />
+                            <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full p-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-orange-300 outline-none transition-all" />
                         </div>
                         <div>
                             <label className="text-sm text-gray-600 mb-2 block">Email</label>

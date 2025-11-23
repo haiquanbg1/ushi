@@ -12,6 +12,13 @@ const TableManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [qrCodeUrl, setQrCodeUrl] = useState('');
     const [showQRModal, setShowQRModal] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [pendingPayment, setPendingPayment] = useState(null);
+    const [paymentData, setPaymentData] = useState({
+        paidAmount: '',
+        changeAmount: 0,
+        paymentMethod: 'cash'
+    });
 
     useEffect(() => {
         fetchTables();
@@ -75,16 +82,65 @@ const TableManagement = () => {
 
             const orderItems = await staffAPI.getOrderItems(activeOrder.id);
 
-            setSelectedTable({
-                ...table,
-                orderId: activeOrder.id,
-                orderDetails: {
-                    ...activeOrder,
-                    items: orderItems,
-                    totalPrice: activeOrder.totalAmount
+            // Check if there's an invoice for this order
+            let invoice = null;
+            try {
+                invoice = await staffAPI.getInvoiceByOrderId(activeOrder.id);
+            } catch (error) {
+                // Invoice doesn't exist yet, which is fine
+                console.log('No invoice found for order:', activeOrder.id);
+            }
+
+            // If invoice exists, show order details (already paid)
+            if (invoice) {
+                setSelectedTable({
+                    ...table,
+                    orderId: activeOrder.id,
+                    orderDetails: {
+                        ...activeOrder,
+                        items: orderItems,
+                        totalPrice: activeOrder.totalAmount
+                    },
+                    invoice: invoice
+                });
+                setShowModal(true);
+                return;
+            }
+
+            // Check for pending payments
+            const payments = await staffAPI.getPaymentsByOrder(activeOrder.id);
+            let pendingPayment = payments?.find(p => p.paymentStatus === 'pending');
+
+            // If no pending payment exists, create one automatically
+            if (!pendingPayment) {
+                try {
+                    const totalAmount = activeOrder.totalAmount || orderItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+                    const newPaymentResponse = await staffAPI.createPayment({
+                        orderId: activeOrder.id,
+                        amount: totalAmount,
+                        paymentMethod: 'cash',
+                        paymentStatus: 'pending'
+                    });
+                    // Handle different response structures
+                    pendingPayment = newPaymentResponse?.data?.data || newPaymentResponse?.data || newPaymentResponse;
+                } catch (error) {
+                    console.error('Error creating payment:', error);
+                    alert('Có lỗi xảy ra khi tạo yêu cầu thanh toán');
+                    return;
                 }
+            }
+
+            // Show payment confirmation modal directly
+            setPendingPayment({
+                ...pendingPayment,
+                order: activeOrder
             });
-            setShowModal(true);
+            setPaymentData({
+                paidAmount: pendingPayment.amount || activeOrder.totalAmount,
+                changeAmount: 0,
+                paymentMethod: pendingPayment.paymentMethod || 'cash'
+            });
+            setShowPaymentModal(true);
         } catch (error) {
             console.error('Error fetching table details:', error);
             alert('Không thể tải chi tiết đơn hàng');
@@ -126,6 +182,36 @@ const TableManagement = () => {
         } catch (error) {
             console.error('Error printing bill:', error);
             alert('Đã có lỗi xảy ra khi xuất hóa đơn');
+        }
+    };
+
+    const handleConfirmPayment = async () => {
+        if (!pendingPayment) return;
+
+        try {
+            const paidAmount = parseFloat(paymentData.paidAmount);
+            const amount = parseFloat(pendingPayment.amount);
+            const changeAmount = paidAmount - amount;
+
+            if (paidAmount < amount) {
+                alert('Số tiền thanh toán không đủ!');
+                return;
+            }
+
+            await staffAPI.confirmPayment(pendingPayment.id, {
+                paidAmount: paidAmount,
+                changeAmount: changeAmount,
+                paymentMethod: paymentData.paymentMethod
+            });
+
+            alert('Xác nhận thanh toán thành công!');
+            setShowPaymentModal(false);
+            setPendingPayment(null);
+            setPaymentData({ paidAmount: '', changeAmount: 0, paymentMethod: 'cash' });
+            fetchTables(); // Refresh tables to update status
+        } catch (error) {
+            console.error('Error confirming payment:', error);
+            alert('Có lỗi xảy ra khi xác nhận thanh toán');
         }
     };
 
@@ -258,7 +344,7 @@ const TableManagement = () => {
 
             {/* Modal chi tiết đơn hàng */}
             {showModal && selectedTable && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
                             <h3 className="text-xl font-bold">
@@ -273,6 +359,25 @@ const TableManagement = () => {
                         </div>
 
                         <div className="px-6 py-4">
+                            {/* Invoice Header - Show if invoice exists */}
+                            {selectedTable.invoice && (
+                                <div className="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-lg font-bold text-green-800">Hóa Đơn</h4>
+                                        <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-semibold">
+                                            Đã thanh toán
+                                        </span>
+                                    </div>
+                                    <div className="text-sm text-gray-700 space-y-1">
+                                        <p><span className="font-semibold">Mã hóa đơn:</span> {selectedTable.invoice.invoiceNumber}</p>
+                                        <p><span className="font-semibold">Ngày xuất:</span> {new Date(selectedTable.invoice.createdAt).toLocaleString('vi-VN')}</p>
+                                        {selectedTable.invoice.totalAmount && (
+                                            <p><span className="font-semibold">Tổng tiền:</span> {selectedTable.invoice.totalAmount.toLocaleString('vi-VN')}đ</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="mb-4 text-sm text-gray-600">
                                 <p>Thời gian: {new Date(selectedTable.orderDetails?.createdAt).toLocaleString('vi-VN')}</p>
                                 <p>Số chỗ: {selectedTable.capacity} người</p>
@@ -310,38 +415,18 @@ const TableManagement = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <button
-                                    onClick={async () => {
-                                        if (!selectedTable?.orderId) return;
-                                        try {
-                                            // Create payment if it doesn't exist
-                                            const existingPayments = await staffAPI.getPaymentsByOrder(selectedTable.orderId);
-                                            if (!existingPayments || existingPayments.length === 0) {
-                                                await staffAPI.createPayment({
-                                                    orderId: selectedTable.orderId,
-                                                    amount: selectedTable.orderDetails?.totalPrice || selectedTable.orderDetails?.totalAmount,
-                                                    paymentMethod: 'cash',
-                                                    paymentStatus: 'pending'
-                                                });
-                                                alert('Đã tạo yêu cầu thanh toán. Vui lòng xác nhận thanh toán trước khi xuất hóa đơn.');
-                                            } else {
-                                                alert('Yêu cầu thanh toán đã tồn tại. Vui lòng xác nhận thanh toán trong tab "Xác nhận Thanh toán".');
-                                            }
-                                        } catch (error) {
-                                            console.error('Error creating payment:', error);
-                                            alert('Có lỗi xảy ra khi tạo yêu cầu thanh toán');
-                                        }
-                                    }}
-                                    className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg transition"
-                                >
-                                    Tạo Yêu cầu Thanh toán
-                                </button>
-                                <button
-                                    onClick={handlePrintBill}
-                                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition"
-                                >
-                                    Xuất Hóa Đơn
-                                </button>
+                                <div className="text-center py-4">
+                                    <p className="text-gray-600 mb-2">Hóa đơn đã được xuất và thanh toán hoàn tất.</p>
+                                    <button
+                                        onClick={() => {
+                                            setShowModal(false);
+                                            fetchTables();
+                                        }}
+                                        className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 rounded-lg transition"
+                                    >
+                                        Đóng
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -350,7 +435,7 @@ const TableManagement = () => {
 
             {/* Modal QR Code */}
             {showQRModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold">Mã QR Đặt Món</h3>
@@ -383,6 +468,104 @@ const TableManagement = () => {
                             >
                                 Tải xuống QR Code
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Confirmation Modal */}
+            {showPaymentModal && pendingPayment && (
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">Xác nhận Thanh toán</h3>
+                            <button
+                                onClick={() => {
+                                    setShowPaymentModal(false);
+                                    setPendingPayment(null);
+                                    setPaymentData({ paidAmount: '', changeAmount: 0, paymentMethod: 'cash' });
+                                }}
+                                className="text-gray-500 hover:text-gray-700 text-2xl"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-sm text-gray-600">Đơn hàng #{pendingPayment.orderId}</p>
+                                {pendingPayment.order?.table && (
+                                    <p className="text-sm text-gray-600">Bàn: {pendingPayment.order.table.tableNumber}</p>
+                                )}
+                                <p className="text-2xl font-bold text-gray-800">
+                                    {parseFloat(pendingPayment.amount).toLocaleString('vi-VN')}đ
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Số tiền nhận (đ)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={paymentData.paidAmount}
+                                    onChange={(e) => {
+                                        const paid = parseFloat(e.target.value) || 0;
+                                        const amount = parseFloat(pendingPayment.amount);
+                                        setPaymentData({
+                                            ...paymentData,
+                                            paidAmount: e.target.value,
+                                            changeAmount: Math.max(0, paid - amount)
+                                        });
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Nhập số tiền nhận"
+                                />
+                            </div>
+
+                            {paymentData.changeAmount > 0 && (
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <p className="text-sm text-gray-600">Tiền thừa:</p>
+                                    <p className="text-xl font-bold text-green-600">
+                                        {paymentData.changeAmount.toLocaleString('vi-VN')}đ
+                                    </p>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Phương thức thanh toán
+                                </label>
+                                <select
+                                    value={paymentData.paymentMethod}
+                                    onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="cash">Tiền mặt</option>
+                                    <option value="card">Thẻ</option>
+                                    <option value="momo">MoMo</option>
+                                    <option value="banking">Chuyển khoản</option>
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowPaymentModal(false);
+                                        setPendingPayment(null);
+                                        setPaymentData({ paidAmount: '', changeAmount: 0, paymentMethod: 'cash' });
+                                    }}
+                                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleConfirmPayment}
+                                    className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold"
+                                >
+                                    Xác nhận
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

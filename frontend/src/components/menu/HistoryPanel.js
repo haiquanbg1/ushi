@@ -33,6 +33,7 @@ export default function HistoryPanel({ onOpenDetail, auth, customerId }) {
                     ...o,
                     at: o.createdAt || o.created_at || o.at,
                     total: Number(o.totalAmount ?? o.total ?? 0),
+                    status: o.orderStatus || o.status, // Map orderStatus to status for compatibility
                 }));
                 if (mounted) setOrders(list);
             } catch (e) {
@@ -62,11 +63,15 @@ export default function HistoryPanel({ onOpenDetail, auth, customerId }) {
         return n.toLocaleString('vi-VN') + '₫';
     };
 
-    const statusCfg = (s) => ({
-        completed: { text: 'Hoàn thành', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200', icon: CheckCircle },
-        pending: { text: 'Đang xử lý', cls: 'bg-amber-50 text-amber-700 ring-amber-200', icon: Clock },
-        cancelled: { text: 'Đã huỷ', cls: 'bg-rose-50 text-rose-700 ring-rose-200', icon: XCircle },
-    }[s] || { text: 'Không rõ', cls: 'bg-slate-50 text-slate-700 ring-slate-200', icon: HistoryIcon });
+    const statusCfg = (s) => {
+        const status = s || 'unknown';
+        return {
+            completed: { text: 'Hoàn thành', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200', icon: CheckCircle },
+            pending: { text: 'Đang xử lý', cls: 'bg-amber-50 text-amber-700 ring-amber-200', icon: Clock },
+            confirmed: { text: 'Đã xác nhận', cls: 'bg-blue-50 text-blue-700 ring-blue-200', icon: Clock },
+            cancelled: { text: 'Đã huỷ', cls: 'bg-rose-50 text-rose-700 ring-rose-200', icon: XCircle },
+        }[status] || { text: 'Không rõ', cls: 'bg-slate-50 text-slate-700 ring-slate-200', icon: HistoryIcon };
+    };
 
     const handleOpen = async (order) => {
         try {

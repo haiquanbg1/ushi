@@ -56,17 +56,17 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'OrderDetail',
-    validate: {
-      // Đảm bảo hoặc có itemId hoặc có comboId
-      eitherItemOrCombo() {
-        if (!this.itemId && !this.comboId) {
-          throw new Error('OrderDetail phải có itemId hoặc comboId');
-        }
-        if (this.itemId && this.comboId) {
-          throw new Error('OrderDetail không thể có cả itemId và comboId');
-        }
-      }
-    },
+    // validate: {
+    //   // Đảm bảo hoặc có itemId hoặc có comboId
+    //   eitherItemOrCombo() {
+    //     if (!this.itemId && !this.comboId) {
+    //       throw new Error('OrderDetail phải có itemId hoặc comboId');
+    //     }
+    //     if (this.itemId && this.comboId) {
+    //       throw new Error('OrderDetail không thể có cả itemId và comboId');
+    //     }
+    //   }
+    // },
     timestamps: false,
   });
   return OrderDetail;

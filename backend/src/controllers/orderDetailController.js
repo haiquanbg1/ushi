@@ -20,6 +20,16 @@ exports.update = async (req, res) => {
     catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 };
 
+exports.updateItem = async (req, res) => {
+    try { res.json({ ok: true, data: await OrderDetailService.updateOrderDetailItem(req.params.id, req.body) }); }
+    catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+};
+
+exports.updateCombo = async (req, res) => {
+    try { res.json({ ok: true, data: await OrderDetailService.updateOrderDetailCombo(req.params.id, req.body) }); }
+    catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+};
+
 exports.remove = async (req, res) => {
     try { res.json({ ok: true, data: await OrderDetailService.deleteOrderDetail(req.params.id) }); }
     catch (e) { res.status(400).json({ ok: false, message: e.message }); }

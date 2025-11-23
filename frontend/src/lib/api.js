@@ -386,13 +386,24 @@ export const staffAPI = {
         }
     },
 
-    // Cập nhật status của order item (order detail)
+    // Cập nhật status của order item (order detail) - for items
     updateOrderItemStatus: async (orderDetailId, status) => {
         try {
-            const response = await apiClient.put(`/order-details/${orderDetailId}`, { status });
+            const response = await apiClient.put(`/order-details/${orderDetailId}/item`, { status });
             return response.data.data;
         } catch (error) {
             console.error('Error updating order item status:', error);
+            throw error;
+        }
+    },
+
+    // Cập nhật status của order combo (order detail) - for combos
+    updateOrderComboStatus: async (orderDetailId, status) => {
+        try {
+            const response = await apiClient.put(`/order-details/${orderDetailId}/combo`, { status });
+            return response.data.data;
+        } catch (error) {
+            console.error('Error updating order combo status:', error);
             throw error;
         }
     },
@@ -546,6 +557,17 @@ export const staffAPI = {
             return response.data;
         } catch (error) {
             console.error('Error creating invoice:', error);
+            throw error;
+        }
+    },
+
+    // Lấy invoice theo orderId
+    getInvoiceByOrderId: async (orderId) => {
+        try {
+            const response = await apiClient.get(`/invoices/order/${orderId}`);
+            return response.data.data;
+        } catch (error) {
+            console.error('Error fetching invoice by order ID:', error);
             throw error;
         }
     },
