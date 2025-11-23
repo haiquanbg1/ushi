@@ -25,8 +25,8 @@ Trước khi cài đặt dự án, hãy đảm bảo máy tính của bạn đã
 Mở terminal (CMD/PowerShell/Terminal) và chạy lệnh sau để tải mã nguồn về máy:
 
 ```bash
-git clone <repository-url>
-cd restaurant-website
+git clone https://github.com/haiquanbg1/ushi.git
+cd ushi
 ````
 
 -----
@@ -76,11 +76,10 @@ Chạy lần lượt các lệnh sau để tạo cấu trúc cơ sở dữ liệ
 #### Bước 2.4: Chạy Server
 
 ```bash
-npm start
-# Hoặc: npm run dev (nếu dùng nodemon)
+npm run dev
 ```
 
-> Server sẽ chạy tại địa chỉ được cấu hình (thường là `http://localhost:8080`).
+> Server sẽ chạy tại địa chỉ được cấu hình (`http://localhost:8080`).
 
 -----
 
