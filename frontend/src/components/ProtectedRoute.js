@@ -11,7 +11,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     useEffect(() => {
         if (!loading) {
             if (!isAuthenticated) {
-                router.push('/');
+                router.push('/login');
                 return;
             }
 
@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
                         router.push('/staff');
                         break;
                     default:
-                        router.push('/menu');
+                        break;
                 }
             }
         }

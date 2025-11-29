@@ -11,18 +11,6 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        roleName: 'Manager',
-        description: 'Quản lý nhà hàng, có quyền quản lý nhân viên và hoạt động kinh doanh',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        roleName: 'Chef',
-        description: 'Đầu bếp, có quyền quản lý menu và chế biến món ăn',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
         roleName: 'Staff',
         description: 'Nhân viên phục vụ, có quyền xử lý đơn hàng và phục vụ khách hàng',
         createdAt: new Date(),

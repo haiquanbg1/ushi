@@ -3,85 +3,83 @@ const { User, Role } = require('../models');
 const bcryptjs = require('bcryptjs');
 
 class UserService {
+
     async getAllUsers() {
         try {
             return await User.findAll({
-                attributes: { exclude: ['password'] }, // Không trả về password
-                include: [
-                    { model: Role, as: 'role' },
-                ],
+                attributes: { exclude: ['password'] },
+                include: [{ model: Role, as: 'role' }],
                 order: [['createdAt', 'DESC']]
             });
         } catch (error) {
-            throw new Error(`Error fetching user accounts: ${error.message}`);
+            throw new Error(`Lỗi khi lấy danh sách người dùng: ${error.message}`);
         }
     }
 
     async getUserById(id) {
         try {
             const user = await User.findByPk(id, {
-                attributes: { exclude: ['password'] }, // Không trả về password
-                include: [
-                    { model: Role, as: 'role' },
-                ]
+                attributes: { exclude: ['password'] },
+                include: [{ model: Role, as: 'role' }]
             });
+
             if (!user) {
-                throw new Error('User account not found');
+                throw new Error('Không tìm thấy tài khoản người dùng.');
             }
+
             return user;
         } catch (error) {
-            throw new Error(`Error fetching user account: ${error.message}`);
+            throw new Error(`Lỗi khi lấy tài khoản người dùng: ${error.message}`);
         }
     }
 
     async createUser(userData) {
         try {
-            // Hash password before creating
             if (userData.password) {
                 const saltRounds = 10;
                 userData.password = await bcryptjs.hash(userData.password, saltRounds);
             }
 
             const user = await User.create(userData);
-
-            // Return user account without password
             return await this.getUserById(user.id);
+
         } catch (error) {
-            throw new Error(`Error creating user account: ${error.message}`);
+            throw new Error(`Lỗi khi tạo tài khoản người dùng: ${error.message}`);
         }
     }
 
     async updateUser(id, updateData) {
         try {
-            // Hash password if it's being updated
             if (updateData.password) {
                 const saltRounds = 10;
                 updateData.password = await bcryptjs.hash(updateData.password, saltRounds);
             }
 
-            const [updatedCount] = await User.update(updateData, {
-                where: { id }
-            });
+            const [updatedCount] = await User.update(updateData, { where: { id } });
+
             if (updatedCount === 0) {
-                throw new Error('User account not found or no changes made');
+                throw new Error('Không tìm thấy tài khoản hoặc không có thay đổi nào.');
             }
+
             return await this.getUserById(id);
+
         } catch (error) {
-            throw new Error(`Error updating user account: ${error.message}`);
+            throw new Error(`Lỗi khi cập nhật tài khoản người dùng: ${error.message}`);
         }
     }
 
     async deleteUser(id) {
         try {
-            const deletedCount = await User.destroy({
-                where: { id }
-            });
+            const deletedCount = await User.destroy({ where: { id } });
+
             if (deletedCount === 0) {
-                throw new Error('User account not found');
+                throw new Error('Không tìm thấy tài khoản người dùng.');
             }
-            return { message: 'User account deleted successfully' };
+
+            return { message: 'Xóa tài khoản thành công.' };
+
         } catch (error) {
-            throw new Error(`Error deleting user account: ${error.message}`);
+            throw new Error(`Lỗi khi xóa tài khoản người dùng: ${error.message}`);
         }
     }
 
@@ -89,13 +87,11 @@ class UserService {
         try {
             return await User.findOne({
                 where: { username },
-                attributes: { exclude: ['password'] }, // Không trả về password
-                include: [
-                    { model: Role, as: 'role' },
-                ]
+                attributes: { exclude: ['password'] },
+                include: [{ model: Role, as: 'role' }]
             });
         } catch (error) {
-            throw new Error(`Error fetching user account by username: ${error.message}`);
+            throw new Error(`Lỗi khi lấy tài khoản theo username: ${error.message}`);
         }
     }
 
@@ -103,95 +99,89 @@ class UserService {
         try {
             return await User.findOne({
                 where: { phone },
-                attributes: { exclude: ['password'] }, // Không trả về password
-                include: [
-                    { model: Role, as: 'role' },
-                ]
+                attributes: { exclude: ['password'] },
+                include: [{ model: Role, as: 'role' }]
             });
         } catch (error) {
-            throw new Error(`Error fetching user account by phone: ${error.message}`);
+            throw new Error(`Lỗi khi lấy tài khoản theo số điện thoại: ${error.message}`);
         }
     }
 
     async authenticateUser(phone, password) {
         try {
             const user = await User.findOne({
-                where: {
-                    phone,
-                    isActive: true
-                },
-                include: [
-                    { model: Role, as: 'role' },
-                ]
+                where: { phone, isActive: true },
+                include: [{ model: Role, as: 'role' }]
             });
 
             if (!user) {
-                throw new Error('Invalid username or password');
+                throw new Error('Số điện thoại hoặc mật khẩu không đúng.');
             }
 
             const isPasswordValid = await bcryptjs.compare(password, user.password);
             if (!isPasswordValid) {
-                throw new Error('Invalid username or password');
+                throw new Error('Số điện thoại hoặc mật khẩu không đúng.');
             }
 
-            // Update last login time
             await User.update(
                 { lastLoginAt: new Date() },
                 { where: { id: user.id } }
             );
 
-            // Return user without password
-            const { password: userPassword, ...userWithoutPassword } = user.toJSON();
+            const { password: _, ...userWithoutPassword } = user.toJSON();
             return userWithoutPassword;
+
         } catch (error) {
-            throw new Error(`Error authenticating user: ${error.message}`);
+            throw new Error(`Lỗi khi đăng nhập: ${error.message}`);
         }
     }
 
     async changePassword(id, oldPassword, newPassword) {
         try {
             const user = await User.findByPk(id);
+
             if (!user) {
-                throw new Error('User account not found');
+                throw new Error('Không tìm thấy tài khoản người dùng.');
             }
 
             const isOldPasswordValid = await bcryptjs.compare(oldPassword, user.password);
             if (!isOldPasswordValid) {
-                throw new Error('Current password is incorrect');
+                throw new Error('Mật khẩu hiện tại không đúng.');
             }
 
-            const saltRounds = 10;
-            const hashedNewPassword = await bcryptjs.hash(newPassword, saltRounds);
+            const hashedNewPassword = await bcryptjs.hash(newPassword, 10);
 
             await User.update(
                 { password: hashedNewPassword },
                 { where: { id } }
             );
 
-            return { message: 'Password changed successfully' };
+            return { message: 'Đổi mật khẩu thành công.' };
+
         } catch (error) {
-            throw new Error(`Error changing password: ${error.message}`);
+            throw new Error(`Lỗi khi đổi mật khẩu: ${error.message}`);
         }
     }
 
     async resetPassword(id, newPassword) {
         try {
             const user = await User.findByPk(id);
+
             if (!user) {
-                throw new Error('User account not found');
+                throw new Error('Không tìm thấy tài khoản người dùng.');
             }
 
-            const saltRounds = 10;
-            const hashedNewPassword = await bcryptjs.hash(newPassword, saltRounds);
+            const hashedNewPassword = await bcryptjs.hash(newPassword, 10);
 
             await User.update(
                 { password: hashedNewPassword },
                 { where: { id } }
             );
 
-            return { message: 'Password reset successfully' };
+            return { message: 'Đặt lại mật khẩu thành công.' };
+
         } catch (error) {
-            throw new Error(`Error resetting password: ${error.message}`);
+            throw new Error(`Lỗi khi đặt lại mật khẩu: ${error.message}`);
         }
     }
 
@@ -200,13 +190,11 @@ class UserService {
             return await User.findAll({
                 where: { isActive: true },
                 attributes: { exclude: ['password'] },
-                include: [
-                    { model: Role, as: 'role' },
-                ],
+                include: [{ model: Role, as: 'role' }],
                 order: [['createdAt', 'DESC']]
             });
         } catch (error) {
-            throw new Error(`Error fetching active user accounts: ${error.message}`);
+            throw new Error(`Lỗi khi lấy danh sách tài khoản đang hoạt động: ${error.message}`);
         }
     }
 
@@ -215,13 +203,11 @@ class UserService {
             return await User.findAll({
                 where: { isActive: false },
                 attributes: { exclude: ['password'] },
-                include: [
-                    { model: Role, as: 'role' },
-                ],
+                include: [{ model: Role, as: 'role' }],
                 order: [['createdAt', 'DESC']]
             });
         } catch (error) {
-            throw new Error(`Error fetching inactive user accounts: ${error.message}`);
+            throw new Error(`Lỗi khi lấy danh sách tài khoản không hoạt động: ${error.message}`);
         }
     }
 
@@ -231,12 +217,15 @@ class UserService {
                 { isActive: false },
                 { where: { id } }
             );
+
             if (updatedCount === 0) {
-                throw new Error('User account not found');
+                throw new Error('Không tìm thấy tài khoản người dùng.');
             }
+
             return await this.getUserById(id);
+
         } catch (error) {
-            throw new Error(`Error deactivating user account: ${error.message}`);
+            throw new Error(`Lỗi khi vô hiệu hóa tài khoản: ${error.message}`);
         }
     }
 
@@ -246,12 +235,15 @@ class UserService {
                 { isActive: true },
                 { where: { id } }
             );
+
             if (updatedCount === 0) {
-                throw new Error('User account not found');
+                throw new Error('Không tìm thấy tài khoản người dùng.');
             }
+
             return await this.getUserById(id);
+
         } catch (error) {
-            throw new Error(`Error activating user account: ${error.message}`);
+            throw new Error(`Lỗi khi kích hoạt tài khoản: ${error.message}`);
         }
     }
 
@@ -260,47 +252,43 @@ class UserService {
             return await User.findAll({
                 where: { roleId },
                 attributes: { exclude: ['password'] },
-                include: [
-                    { model: Role, as: 'role' },
-                ],
+                include: [{ model: Role, as: 'role' }],
                 order: [['createdAt', 'DESC']]
             });
         } catch (error) {
-            throw new Error(`Error fetching user accounts by role ID: ${error.message}`);
+            throw new Error(`Lỗi khi lấy danh sách theo vai trò: ${error.message}`);
         }
     }
 
     async checkUsernameExists(username, excludeId = null) {
         try {
             const whereCondition = { username };
+
             if (excludeId) {
                 whereCondition.id = { [require('sequelize').Op.ne]: excludeId };
             }
 
-            const user = await User.findOne({
-                where: whereCondition
-            });
+            const user = await User.findOne({ where: whereCondition });
+            return !!user;
 
-            return !!user; // Return boolean
         } catch (error) {
-            throw new Error(`Error checking username exists: ${error.message}`);
+            throw new Error(`Lỗi khi kiểm tra username tồn tại: ${error.message}`);
         }
     }
 
     async checkPhoneExists(phone, excludeId = null) {
         try {
             const whereCondition = { phone };
+
             if (excludeId) {
                 whereCondition.id = { [require('sequelize').Op.ne]: excludeId };
             }
 
-            const user = await User.findOne({
-                where: whereCondition
-            });
+            const user = await User.findOne({ where: whereCondition });
+            return !!user;
 
-            return !!user; // Return boolean
         } catch (error) {
-            throw new Error(`Error checking phone exists: ${error.message}`);
+            throw new Error(`Lỗi khi kiểm tra số điện thoại tồn tại: ${error.message}`);
         }
     }
 
@@ -310,12 +298,15 @@ class UserService {
                 { lastLoginAt: new Date() },
                 { where: { id } }
             );
+
             if (updatedCount === 0) {
-                throw new Error('User account not found');
+                throw new Error('Không tìm thấy tài khoản người dùng.');
             }
-            return { message: 'Last login updated successfully' };
+
+            return { message: 'Cập nhật thời gian đăng nhập gần nhất thành công.' };
+
         } catch (error) {
-            throw new Error(`Error updating last login: ${error.message}`);
+            throw new Error(`Lỗi khi cập nhật thời gian đăng nhập: ${error.message}`);
         }
     }
 
@@ -325,7 +316,7 @@ class UserService {
             const activeUsers = await User.count({ where: { isActive: true } });
             const inactiveUsers = await User.count({ where: { isActive: false } });
 
-            const { Op, BulkRecordError } = require('sequelize');
+            const { Op } = require('sequelize');
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -342,8 +333,9 @@ class UserService {
                 inactiveUsers,
                 recentLoginUsers
             };
+
         } catch (error) {
-            throw new Error(`Error fetching user account stats: ${error.message}`);
+            throw new Error(`Lỗi khi lấy thống kê tài khoản: ${error.message}`);
         }
     }
 }

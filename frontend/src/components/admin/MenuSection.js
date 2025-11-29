@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import Modal from '../utils/Modal';
 import { itemAPI, comboAPI, categoryAPI, comboItemAPI } from '@/lib/api';
+import { useToast } from '@/components/utils/ToaskProvider';
 
 function MenuSection() {
     const [tab, setTab] = useState('items');
@@ -20,6 +21,8 @@ function MenuSection() {
     const [selectedCombo, setSelectedCombo] = useState(null);
     const [comboItemsList, setComboItemsList] = useState([]);
     const [formErrors, setFormErrors] = useState({});
+
+    const toast = useToast();
 
     const [itemForm, setItemForm] = useState({
         name: '',
@@ -68,7 +71,7 @@ function MenuSection() {
             setCategories(categoriesData.data.data);
         } catch (error) {
             console.error('Error loading menu data:', error);
-            alert('Không thể tải dữ liệu. Vui lòng thử lại.');
+            toast.error('Không thể tải dữ liệu. Vui lòng thử lại.', { title: 'Lỗi' });
         } finally {
             setLoading(false);
         }
@@ -80,6 +83,7 @@ function MenuSection() {
             setComboItemsList(data.data.data);
         } catch (error) {
             console.error('Error loading combo items:', error);
+            toast.error('Không thể tải danh sách món trong combo.', { title: 'Lỗi' });
         }
     };
 
@@ -94,6 +98,11 @@ function MenuSection() {
         if (!itemForm.price || parseFloat(itemForm.price) <= 0) errors.price = 'Giá phải lớn hơn 0';
         if (!itemForm.categoryId) errors.categoryId = 'Danh mục là bắt buộc';
         setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            toast.error('Vui lòng kiểm tra lại các trường bắt buộc.', { title: 'Thiếu thông tin' });
+        }
+
         return Object.keys(errors).length === 0;
     };
 
@@ -145,8 +154,10 @@ function MenuSection() {
 
             if (editingItem) {
                 await itemAPI.update(editingItem.id, data);
+                toast.success('Cập nhật món ăn thành công.', { title: 'Thành công' });
             } else {
                 await itemAPI.create(data);
+                toast.success('Tạo món ăn mới thành công.', { title: 'Thành công' });
             }
 
             setOpenItem(false);
@@ -154,7 +165,8 @@ function MenuSection() {
             await load();
         } catch (error) {
             console.error('Error saving item:', error);
-            alert('Không thể lưu món. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể lưu món. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -162,10 +174,12 @@ function MenuSection() {
         if (!window.confirm('Bạn có chắc muốn xóa món này?')) return;
         try {
             await itemAPI.delete(id);
+            toast.success('Đã xóa món ăn.', { title: 'Thành công' });
             await load();
         } catch (error) {
             console.error('Error deleting item:', error);
-            alert('Không thể xóa món. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể xóa món. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -175,6 +189,11 @@ function MenuSection() {
         if (!comboForm.name?.trim()) errors.name = 'Tên combo là bắt buộc';
         if (!comboForm.price || parseFloat(comboForm.price) <= 0) errors.price = 'Giá phải lớn hơn 0';
         setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            toast.error('Vui lòng kiểm tra lại các trường bắt buộc.', { title: 'Thiếu thông tin' });
+        }
+
         return Object.keys(errors).length === 0;
     };
 
@@ -217,8 +236,10 @@ function MenuSection() {
 
             if (editingCombo) {
                 await comboAPI.update(editingCombo.id, data);
+                toast.success('Cập nhật combo thành công.', { title: 'Thành công' });
             } else {
                 await comboAPI.create(data);
+                toast.success('Tạo combo mới thành công.', { title: 'Thành công' });
             }
 
             setOpenCombo(false);
@@ -226,7 +247,8 @@ function MenuSection() {
             await load();
         } catch (error) {
             console.error('Error saving combo:', error);
-            alert('Không thể lưu combo. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể lưu combo. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -234,10 +256,12 @@ function MenuSection() {
         if (!window.confirm('Bạn có chắc muốn xóa combo này?')) return;
         try {
             await comboAPI.delete(id);
+            toast.success('Đã xóa combo.', { title: 'Thành công' });
             await load();
         } catch (error) {
             console.error('Error deleting combo:', error);
-            alert('Không thể xóa combo. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể xóa combo. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -246,6 +270,11 @@ function MenuSection() {
         const errors = {};
         if (!categoryForm.categoryName?.trim()) errors.categoryName = 'Tên danh mục là bắt buộc';
         setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            toast.error('Vui lòng kiểm tra lại các trường bắt buộc.', { title: 'Thiếu thông tin' });
+        }
+
         return Object.keys(errors).length === 0;
     };
 
@@ -288,8 +317,10 @@ function MenuSection() {
 
             if (editingCategory) {
                 await categoryAPI.update(editingCategory.id, data);
+                toast.success('Cập nhật danh mục thành công.', { title: 'Thành công' });
             } else {
                 await categoryAPI.create(data);
+                toast.success('Tạo danh mục mới thành công.', { title: 'Thành công' });
             }
 
             setOpenCategory(false);
@@ -297,7 +328,8 @@ function MenuSection() {
             await load();
         } catch (error) {
             console.error('Error saving category:', error);
-            alert('Không thể lưu danh mục. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể lưu danh mục. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -305,10 +337,12 @@ function MenuSection() {
         if (!window.confirm('Bạn có chắc muốn xóa danh mục này?')) return;
         try {
             await categoryAPI.delete(id);
+            toast.success('Đã xóa danh mục.', { title: 'Thành công' });
             await load();
         } catch (error) {
             console.error('Error deleting category:', error);
-            alert('Không thể xóa danh mục. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể xóa danh mục. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -323,7 +357,7 @@ function MenuSection() {
     const addComboItem = async (e) => {
         e.preventDefault();
         if (!newComboItem.itemId) {
-            alert('Vui lòng chọn món');
+            toast.error('Vui lòng chọn món trước khi thêm.', { title: 'Thiếu thông tin' });
             return;
         }
 
@@ -336,11 +370,14 @@ function MenuSection() {
                 isDefault: newComboItem.isDefault
             });
 
+            toast.success('Đã thêm món vào combo.', { title: 'Thành công' });
+
             setNewComboItem({ itemId: '', quantity: 1, isRequired: false, isDefault: false });
             await loadComboItems(selectedCombo.id);
         } catch (error) {
             console.error('Error adding combo item:', error);
-            alert('Không thể thêm món vào combo. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể thêm món vào combo. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -348,10 +385,12 @@ function MenuSection() {
         if (!window.confirm('Bạn có chắc muốn xóa?')) return;
         try {
             await comboItemAPI.delete(id);
+            toast.success('Đã xóa món khỏi combo.', { title: 'Thành công' });
             await loadComboItems(selectedCombo.id);
         } catch (error) {
             console.error('Error deleting combo item:', error);
-            alert('Không thể xóa. Vui lòng thử lại.');
+            const msg = error?.response?.data?.message || 'Không thể xóa. Vui lòng thử lại.';
+            toast.error(msg, { title: 'Lỗi' });
         }
     };
 
@@ -987,3 +1026,4 @@ function MenuSection() {
 }
 
 export default MenuSection;
+

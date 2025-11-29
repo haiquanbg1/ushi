@@ -4,6 +4,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ẩn icon lịch mặc định trên các browser WebKit */
+.input-date-custom::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+/* Ẩn mũi tên / spinner trên một số browser */
+.input-date-custom::-webkit-inner-spin-button,
+.input-date-custom::-webkit-clear-button {
+  display: none;
+}
+
+/* Cho phép tự style */
+.input-date-custom {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
 @layer components {
   .btn {
     @apply inline-flex items-center px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;

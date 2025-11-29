@@ -21,7 +21,6 @@ function DashboardSection() {
     const [revenue, setRevenue] = useState([]);
     const [bestSellers, setBestSellers] = useState([]);
     const [comboShare, setComboShare] = useState([]);
-    const [KPI, setKPI] = useState([]);
     const [revenueVsOrders, setRevenueVsOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -32,18 +31,21 @@ function DashboardSection() {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const [revenueRes, bestSellersRes, comboShareRes, kpisRes, revenueVsOrdersRes] = await Promise.all([
+            const [
+                revenueRes,
+                bestSellersRes,
+                comboShareRes,
+                revenueVsOrdersRes
+            ] = await Promise.all([
                 analyticsAPI.getRevenueByMonth(6),
                 analyticsAPI.getBestSellingItems(10),
                 analyticsAPI.getComboShare(),
-                analyticsAPI.getKPIs(),
                 analyticsAPI.getRevenueVsOrders(6)
             ]);
 
             setRevenue(revenueRes.data?.data || []);
             setBestSellers(bestSellersRes.data?.data || []);
             setComboShare(comboShareRes.data?.data || []);
-            setKPI(kpisRes.data?.data || []);
             setRevenueVsOrders(revenueVsOrdersRes.data?.data || []);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
@@ -51,7 +53,6 @@ function DashboardSection() {
             setRevenue([]);
             setBestSellers([]);
             setComboShare([]);
-            setKPI([]);
             setRevenueVsOrders([]);
         } finally {
             setLoading(false);
@@ -71,80 +72,162 @@ function DashboardSection() {
 
     return (
         <div className="space-y-6">
-            {/* KPIs */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {KPI.length > 0 ? KPI.map((k) => (
-                    <div key={k.title} className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
-                        <div className="text-sm text-slate-400">{k.title}</div>
-                        <div className="mt-1 text-2xl font-semibold">{k.value}</div>
-                        <div className={`mt-2 text-xs ${k.state === 'good' ? 'text-emerald-400' : k.state === 'warn' ? 'text-amber-400' : 'text-slate-400'
-                            }`}>{k.trend}</div>
-                    </div>
-                )) : (
-                    <div className="col-span-4 text-center py-8 text-slate-400">
-                        Chưa có dữ liệu
-                    </div>
-                )}
+            {/* Header + nút làm mới */}
+            <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-100">
+                    Tổng quan kinh doanh
+                </h2>
+                <button
+                    onClick={fetchDashboardData}
+                    className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800"
+                >
+                    Làm mới dữ liệu
+                </button>
             </div>
 
             {/* Charts */}
             <div className="grid gap-4 lg:grid-cols-2">
-                <Card title="Revenue by Month" right={
-                    <button onClick={fetchDashboardData} className="text-xs text-slate-400 hover:text-slate-200">
-                        🔄 Refresh
-                    </button>
-                }>
+                <Card title="Doanh thu theo tháng">
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={revenue.length > 0 ? revenue : []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                                <Tooltip contentStyle={{ background: '#0b0f19', border: '1px solid #1f2937', color: '#e5e7eb' }} />
+                            <LineChart
+                                data={revenue.length > 0 ? revenue : []}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                            >
+                                <XAxis
+                                    dataKey="month"
+                                    stroke="#94a3b8"
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                    stroke="#94a3b8"
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        background: '#0b0f19',
+                                        border: '1px solid #1f2937',
+                                        color: '#e5e7eb'
+                                    }}
+                                />
                                 <Legend />
-                                <Line type="monotone" dataKey="value" stroke="#60a5fa" strokeWidth={2} dot={false} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="value"
+                                    stroke="#60a5fa"
+                                    strokeWidth={2}
+                                    dot={false}
+                                />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
 
-                <Card title="Best Selling Items">
+                <Card title="Món bán chạy">
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={bestSellers.length > 0 ? bestSellers : []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                                <Tooltip contentStyle={{ background: '#0b0f19', border: '1px solid #1f2937', color: '#e5e7eb' }} />
-                                <Bar dataKey="sold" fill="#34d399" radius={[8, 8, 0, 0]} />
+                            <BarChart
+                                data={bestSellers.length > 0 ? bestSellers : []}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                            >
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="#94a3b8"
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                    stroke="#94a3b8"
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        background: '#0b0f19',
+                                        border: '1px solid #1f2937',
+                                        color: '#e5e7eb'
+                                    }}
+                                />
+                                <Bar
+                                    dataKey="sold"
+                                    fill="#34d399"
+                                    radius={[8, 8, 0, 0]}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
 
-                <Card title="Combo Share (%)">
+                <Card title="Tỷ lệ combo (%)">
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie data={comboShare.length > 0 ? comboShare : []} cx="50%" cy="50%" outerRadius={90} dataKey="value" nameKey="name">
+                                <Pie
+                                    data={comboShare.length > 0 ? comboShare : []}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={90}
+                                    dataKey="value"
+                                    nameKey="name"
+                                >
                                     {comboShare.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={['#60a5fa', '#a78bfa', '#f472b6', '#fbbf24'][index % 4]} />
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={
+                                                ['#60a5fa', '#a78bfa', '#f472b6', '#fbbf24'][
+                                                index % 4
+                                                ]
+                                            }
+                                        />
                                     ))}
                                 </Pie>
-                                <Tooltip contentStyle={{ background: '#0b0f19', border: '1px solid #1f2937', color: '#e5e7eb' }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        background: '#0b0f19',
+                                        border: '1px solid #1f2937',
+                                        color: '#e5e7eb'
+                                    }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
 
-                <Card title="Revenue vs Orders">
+                <Card title="Doanh thu & số đơn">
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={revenueVsOrders.length > 0 ? revenueVsOrders : []}>
-                                <XAxis dataKey="month" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                                <Tooltip contentStyle={{ background: '#0b0f19', border: '1px solid #1f2937', color: '#e5e7eb' }} />
+                            <BarChart
+                                data={
+                                    revenueVsOrders.length > 0
+                                        ? revenueVsOrders
+                                        : []
+                                }
+                            >
+                                <XAxis
+                                    dataKey="month"
+                                    stroke="#94a3b8"
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                    stroke="#94a3b8"
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        background: '#0b0f19',
+                                        border: '1px solid #1f2937',
+                                        color: '#e5e7eb'
+                                    }}
+                                />
                                 <Legend />
-                                <Bar dataKey="revenue" fill="#60a5fa" radius={[8, 8, 0, 0]} />
-                                <Bar dataKey="orders" fill="#fbbf24" radius={[8, 8, 0, 0]} />
+                                <Bar
+                                    dataKey="revenue"
+                                    fill="#60a5fa"
+                                    radius={[8, 8, 0, 0]}
+                                />
+                                <Bar
+                                    dataKey="orders"
+                                    fill="#fbbf24"
+                                    radius={[8, 8, 0, 0]}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -154,12 +237,11 @@ function DashboardSection() {
     );
 }
 
-function Card({ title, children, right }) {
+function Card({ title, children }) {
     return (
         <section className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
-                {right}
             </div>
             {children}
         </section>

@@ -13,11 +13,12 @@ const COOKIE_CONFIG = {
 };
 
 const ERROR_MESSAGES = {
-    NO_REFRESH_TOKEN: "Authentication expired. Please log in again.",
-    INVALID_REFRESH_TOKEN: "Invalid authentication. Please log in again.",
-    REFRESH_TOKEN_EXPIRED: "Session expired. Please log in again.",
-    UNAUTHORIZED: "Authentication required. Please log in."
+    NO_REFRESH_TOKEN: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+    INVALID_REFRESH_TOKEN: "Xác thực không hợp lệ. Vui lòng đăng nhập lại.",
+    REFRESH_TOKEN_EXPIRED: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.",
+    UNAUTHORIZED: "Bạn cần đăng nhập để tiếp tục."
 };
+
 
 const logout = (res) => {
     const cookieOptions = {

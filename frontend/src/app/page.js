@@ -111,16 +111,6 @@ export default function HomePage() {
 		{ id: 5, name: 'Chả Cá Lã Vọng', image: 'https://images.unsplash.com/photo-1604908815461-8b2d29ba6670?w=1000&fit=crop', price: '120,000 VNĐ', description: 'Chả cá truyền thống Hà Nội' },
 	];
 
-	useEffect(() => {
-		if (!loading && isAuthenticated && user) {
-			switch (user.role) {
-				case 'Admin': router.push('/admin'); break;
-				case 'Staff': router.push('/staff'); break;
-				default: router.push('/menu');
-			}
-		}
-	}, [loading, isAuthenticated, user, router]);
-
 	if (loading) {
 		return (
 			<div className="flex min-h-[100svh] items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
@@ -137,40 +127,35 @@ export default function HomePage() {
 			{/* Header */}
 			<header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-md">
 				<div className="mx-auto max-w-7xl px-4">
-					<div className="flex h-16 items-center justify-between">
-						<div className="flex items-center gap-2">
-							<Link href="/" className="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+					<div className="relative flex h-16 items-center">
+						{/* Logo bên trái */}
+						<div className="flex items-center gap-2 z-10">
+							<Link
+								href="/"
+								className="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent"
+							>
 								Ushi Mania
 							</Link>
 						</div>
 
-						<nav className="hidden md:flex items-center gap-6">
+						{/* Nav luôn ở chính giữa */}
+						<nav className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
 							<a href="#hero" className="font-medium text-gray-700 hover:text-orange-600">Trang chủ</a>
 							<a href="#promotions" className="font-medium text-gray-700 hover:text-orange-600">Ưu đãi</a>
 							<a href="#featured" className="font-medium text-gray-700 hover:text-orange-600">Món nổi bật</a>
 							<a href="#contact" className="font-medium text-gray-700 hover:text-orange-600">Liên hệ</a>
 						</nav>
 
-						<div className="hidden items-center gap-3 md:flex">
-							{isAuthenticated && user ? (
-								<>
-									<span className="text-gray-700">Xin chào, <b>{user.name}</b></span>
-									<button className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-										Đăng xuất
-									</button>
-								</>
-							) : (
-								<>
-									<Link href="/login" className="text-sm font-medium text-orange-600 hover:text-orange-700">Đăng nhập</Link>
-									<Link href="/register" className="rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-medium text-white hover:from-orange-700 hover:to-red-700">
-										Đăng ký
-									</Link>
-								</>
-							)}
+						{/* Đăng nhập / Đăng ký hoặc Xin chào ... bên phải */}
+						<div className="hidden md:flex items-center gap-3 ml-auto z-10">
+							{/* render gì thì tuỳ, hoặc để trống cũng không ảnh hưởng tới nav */}
+							{/* ví dụ ẩn luôn: */}
+							{/* <></> */}
 						</div>
 
+						{/* Nút menu mobile */}
 						<button
-							className="rounded-md p-2 hover:bg-gray-100 md:hidden"
+							className="ml-auto rounded-md p-2 hover:bg-gray-100 md:hidden"
 							onClick={() => setMobileNavOpen((v) => !v)}
 							aria-label="Mở menu"
 						>
@@ -196,7 +181,7 @@ export default function HomePage() {
 							</nav>
 
 							<div className="mt-2 flex items-center gap-2">
-								{isAuthenticated && user ? (
+								{/* {isAuthenticated && user ? (
 									<>
 										<span className="text-gray-700">Xin chào, <b>{user.name}</b></span>
 										<button className="ml-auto rounded-md bg-gray-100 px-3 py-2 text-sm text-gray-700">Đăng xuất</button>
@@ -206,7 +191,7 @@ export default function HomePage() {
 										<Link href="/login" className="flex-1 rounded-md border px-3 py-2 text-center text-sm text-gray-700">Đăng nhập</Link>
 										<Link href="/register" className="flex-1 rounded-md bg-gradient-to-r from-orange-600 to-red-600 px-3 py-2 text-center text-sm text-white">Đăng ký</Link>
 									</>
-								)}
+								)} */}
 							</div>
 						</div>
 					)}
@@ -230,10 +215,9 @@ export default function HomePage() {
 						<p className="mx-auto mt-4 max-w-2xl text-base text-gray-200 sm:text-lg">
 							Khám phá tinh hoa ẩm thực Việt Nam với những món ăn truyền thống từ nguyên liệu tươi ngon nhất.
 						</p>
-						<div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+						{/* <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
 							<Link href="/menu" className="w-full rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-6 py-3 text-center text-white sm:w-auto">Xem Thực Đơn</Link>
-							<Link href="/booking" className="w-full rounded-lg border border-white/40 bg-white/10 px-6 py-3 text-center text-white backdrop-blur sm:w-auto">Đặt Bàn Ngay</Link>
-						</div>
+						</div> */}
 					</div>
 				</div>
 			</section>

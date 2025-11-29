@@ -13,13 +13,13 @@ const validators = {
     },
 
     isStrongPassword: (password) => {
-        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+        // Ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số
         const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         return strongPasswordRegex.test(password);
     },
 
     isValidPhoneNumber: (phone) => {
-        // Vietnamese phone number format
+        // Số điện thoại Việt Nam
         const phoneRegex = /^(0|\+84)[3-9]\d{8,9}$/;
         return phoneRegex.test(phone);
     }
@@ -32,36 +32,32 @@ const validateRegister = async (req, res, next) => {
     const { phone, password, confirmPassword, role } = req.body;
     console.log(req.body);
 
-    const errors = [];
-
     // Phone validation
     if (!phone) {
-        errors.push("Phone number is required");
-    } else if (!validators.isValidPhoneNumber(phone)) {
-        errors.push("Invalid phone number format");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập số điện thoại.");
+    }
+    if (!validators.isValidPhoneNumber(phone)) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Số điện thoại không đúng định dạng.");
     }
 
     // Password validation
     if (!password) {
-        errors.push("Password is required");
-    } else if (!validators.isStrongPassword(password)) {
-        errors.push("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập mật khẩu.");
+    }
+    if (!validators.isStrongPassword(password)) {
+        return errorResponse(
+            res,
+            StatusCodes.BAD_REQUEST,
+            "Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường và một chữ số."
+        );
     }
 
     // Confirm password validation
     if (!confirmPassword) {
-        errors.push("Confirm password is required");
-    } else if (password && confirmPassword && password !== confirmPassword) {
-        errors.push("Password and confirm password do not match");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập lại mật khẩu xác nhận.");
     }
-
-    if (errors.length > 0) {
-        return errorResponse(
-            res,
-            StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
-        );
+    if (password && confirmPassword && password !== confirmPassword) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Mật khẩu và mật khẩu xác nhận không trùng khớp.");
     }
 
     next();
@@ -73,25 +69,15 @@ const validateRegister = async (req, res, next) => {
 const validateLogin = (req, res, next) => {
     const { phone, password } = req.body;
 
-    const errors = [];
-
     if (!phone) {
-        errors.push("Phone number is required");
-    } else if (!validators.isValidPhoneNumber(phone)) {
-        errors.push("Invalid phone number format");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập số điện thoại.");
+    }
+    if (!validators.isValidPhoneNumber(phone)) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Số điện thoại không đúng định dạng.");
     }
 
     if (!password) {
-        errors.push("Password is required");
-    }
-
-    if (errors.length > 0) {
-        return errorResponse(
-            res,
-            StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
-        );
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập mật khẩu.");
     }
 
     next();
@@ -103,47 +89,42 @@ const validateLogin = (req, res, next) => {
 const validateUserCreate = async (req, res, next) => {
     const { phone, password, roleId } = req.body;
 
-    const errors = [];
-
     // Phone validation
     if (!phone) {
-        errors.push("Phone number is required");
-    } else if (!validators.isValidPhoneNumber(phone)) {
-        errors.push("Invalid phone number format");
-    } else {
-        // Check if phone already exists
-        try {
-            const phoneExists = await userAccountService.checkPhoneExists(phone);
-            if (phoneExists) {
-                errors.push("Phone number already exists");
-            }
-        } catch (error) {
-            console.error("Phone check error:", error.message);
-            errors.push("Failed to validate phone number");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập số điện thoại.");
+    }
+    if (!validators.isValidPhoneNumber(phone)) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Số điện thoại không đúng định dạng.");
+    }
+    // Check if phone already exists
+    try {
+        const phoneExists = await userAccountService.checkPhoneExists(phone);
+        if (phoneExists) {
+            return errorResponse(res, StatusCodes.BAD_REQUEST, "Số điện thoại đã tồn tại.");
         }
+    } catch (error) {
+        console.error("Phone check error:", error.message);
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Kiểm tra số điện thoại thất bại.");
     }
 
     // Password validation
     if (!password) {
-        errors.push("Password is required");
-    } else if (!validators.isStrongPassword(password)) {
-        errors.push("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập mật khẩu.");
+    }
+    if (!validators.isStrongPassword(password)) {
+        return errorResponse(
+            res,
+            StatusCodes.BAD_REQUEST,
+            "Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường và một chữ số."
+        );
     }
 
     // Role validation
     if (!roleId) {
-        errors.push("Role is required");
-    } else if (!Number.isInteger(roleId) || roleId <= 0) {
-        errors.push("Invalid role ID");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy chọn vai trò (role).");
     }
-
-    if (errors.length > 0) {
-        return errorResponse(
-            res,
-            StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
-        );
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "ID vai trò không hợp lệ.");
     }
 
     next();
@@ -156,47 +137,38 @@ const validateUserUpdate = async (req, res, next) => {
     const { phone, password, roleId } = req.body;
     const userId = req.params.id;
 
-    const errors = [];
-
-    // Phone validation (if provided)
+    // Phone validation (nếu có truyền)
     if (phone) {
         if (!validators.isValidPhoneNumber(phone)) {
-            errors.push("Invalid phone number format");
-        } else {
-            // Check if phone already exists for another user
-            try {
-                const phoneExists = await userAccountService.checkPhoneExists(phone, parseInt(userId));
-                if (phoneExists) {
-                    errors.push("Phone number already exists");
-                }
-            } catch (error) {
-                console.error("Phone check error:", error.message);
-                errors.push("Failed to validate phone number");
+            return errorResponse(res, StatusCodes.BAD_REQUEST, "Số điện thoại không đúng định dạng.");
+        }
+        try {
+            const phoneExists = await userAccountService.checkPhoneExists(phone, parseInt(userId));
+            if (phoneExists) {
+                return errorResponse(res, StatusCodes.BAD_REQUEST, "Số điện thoại đã tồn tại.");
             }
+        } catch (error) {
+            console.error("Phone check error:", error.message);
+            return errorResponse(res, StatusCodes.BAD_REQUEST, "Kiểm tra số điện thoại thất bại.");
         }
     }
 
-    // Password validation (if provided)
+    // Password validation (nếu có truyền)
     if (password) {
         if (!validators.isStrongPassword(password)) {
-            errors.push("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number");
+            return errorResponse(
+                res,
+                StatusCodes.BAD_REQUEST,
+                "Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường và một chữ số."
+            );
         }
     }
 
-    // Role validation (if provided)
+    // Role validation (nếu có truyền)
     if (roleId !== undefined) {
         if (!Number.isInteger(roleId) || roleId <= 0) {
-            errors.push("Invalid role ID");
+            return errorResponse(res, StatusCodes.BAD_REQUEST, "ID vai trò không hợp lệ.");
         }
-    }
-
-    if (errors.length > 0) {
-        return errorResponse(
-            res,
-            StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
-        );
     }
 
     next();
@@ -208,37 +180,31 @@ const validateUserUpdate = async (req, res, next) => {
 const validatePasswordChange = (req, res, next) => {
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
-    const errors = [];
-
     if (!oldPassword) {
-        errors.push("Current password is required");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập mật khẩu hiện tại.");
     }
 
     if (!newPassword) {
-        errors.push("New password is required");
-    } else if (!validators.isStrongPassword(newPassword)) {
-        errors.push("New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập mật khẩu mới.");
     }
-
-    if (!confirmPassword) {
-        errors.push("Confirm password is required");
-    }
-
-    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
-        errors.push("New password and confirm password do not match");
-    }
-
-    if (oldPassword && newPassword && oldPassword === newPassword) {
-        errors.push("New password must be different from current password");
-    }
-
-    if (errors.length > 0) {
+    if (!validators.isStrongPassword(newPassword)) {
         return errorResponse(
             res,
             StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
+            "Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường và một chữ số."
         );
+    }
+
+    if (!confirmPassword) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập lại mật khẩu mới để xác nhận.");
+    }
+
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Mật khẩu mới và mật khẩu xác nhận không trùng khớp.");
+    }
+
+    if (oldPassword && newPassword && oldPassword === newPassword) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Mật khẩu mới phải khác mật khẩu hiện tại.");
     }
 
     next();
@@ -250,26 +216,21 @@ const validatePasswordChange = (req, res, next) => {
 const validatePasswordReset = (req, res, next) => {
     const { userId, newPassword } = req.body;
 
-    const errors = [];
-
     if (!userId) {
-        errors.push("User ID is required");
-    } else if (!Number.isInteger(userId) || userId <= 0) {
-        errors.push("Invalid user ID");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Thiếu ID người dùng.");
+    }
+    if (!Number.isInteger(userId) || userId <= 0) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "ID người dùng không hợp lệ.");
     }
 
     if (!newPassword) {
-        errors.push("New password is required");
-    } else if (!validators.isStrongPassword(newPassword)) {
-        errors.push("New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập mật khẩu mới.");
     }
-
-    if (errors.length > 0) {
+    if (!validators.isStrongPassword(newPassword)) {
         return errorResponse(
             res,
             StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
+            "Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm ít nhất một chữ hoa, một chữ thường và một chữ số."
         );
     }
 
@@ -282,27 +243,18 @@ const validatePasswordReset = (req, res, next) => {
 const validateRoleCreate = (req, res, next) => {
     const { roleName, description } = req.body;
 
-    const errors = [];
-
     if (!roleName) {
-        errors.push("Role name is required");
-    } else if (roleName.trim().length < 2) {
-        errors.push("Role name must be at least 2 characters long");
-    } else if (roleName.trim().length > 50) {
-        errors.push("Role name must not exceed 50 characters");
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Hãy nhập tên vai trò.");
+    }
+    if (roleName.trim().length < 2) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Tên vai trò phải có ít nhất 2 ký tự.");
+    }
+    if (roleName.trim().length > 50) {
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Tên vai trò không được vượt quá 50 ký tự.");
     }
 
     if (description && description.length > 255) {
-        errors.push("Description must not exceed 255 characters");
-    }
-
-    if (errors.length > 0) {
-        return errorResponse(
-            res,
-            StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
-        );
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Mô tả không được vượt quá 255 ký tự.");
     }
 
     next();
@@ -314,27 +266,17 @@ const validateRoleCreate = (req, res, next) => {
 const validateRoleUpdate = (req, res, next) => {
     const { roleName, description } = req.body;
 
-    const errors = [];
-
     if (roleName !== undefined) {
         if (!roleName || roleName.trim().length < 2) {
-            errors.push("Role name must be at least 2 characters long");
-        } else if (roleName.trim().length > 50) {
-            errors.push("Role name must not exceed 50 characters");
+            return errorResponse(res, StatusCodes.BAD_REQUEST, "Tên vai trò phải có ít nhất 2 ký tự.");
+        }
+        if (roleName.trim().length > 50) {
+            return errorResponse(res, StatusCodes.BAD_REQUEST, "Tên vai trò không được vượt quá 50 ký tự.");
         }
     }
 
     if (description !== undefined && description.length > 255) {
-        errors.push("Description must not exceed 255 characters");
-    }
-
-    if (errors.length > 0) {
-        return errorResponse(
-            res,
-            StatusCodes.BAD_REQUEST,
-            "Validation failed",
-            { errors }
-        );
+        return errorResponse(res, StatusCodes.BAD_REQUEST, "Mô tả không được vượt quá 255 ký tự.");
     }
 
     next();
@@ -351,7 +293,7 @@ const validateId = (paramName = 'id') => {
             return errorResponse(
                 res,
                 StatusCodes.BAD_REQUEST,
-                `Invalid ${paramName} parameter`
+                `Tham số ${paramName} không hợp lệ.`
             );
         }
 
@@ -390,7 +332,7 @@ const sanitizeInput = (req, res, next) => {
         return errorResponse(
             res,
             StatusCodes.INTERNAL_SERVER_ERROR,
-            "Input processing failed"
+            "Xử lý dữ liệu đầu vào thất bại."
         );
     }
 };

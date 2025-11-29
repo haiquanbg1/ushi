@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardSection from '@/components/admin/Dashboard';
 import UserSection from '@/components/admin/UserSection';
@@ -12,23 +12,19 @@ import {
     LayoutDashboard,
     Users,
     UtensilsCrossed,
-    Package,
     Gift,
     Table2,
     LogOut,
     Settings,
-    Plus,
-    Pencil,
-    Trash2,
     ChevronRight,
 } from 'lucide-react';
 
 const NAV = [
-    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { key: 'users', label: 'Users', icon: Users },
-    { key: 'menu', label: 'Menu', icon: UtensilsCrossed },
-    { key: 'promotions', label: 'Promos', icon: Gift },
-    { key: 'tables', label: 'Tables', icon: Table2 },
+    { key: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
+    { key: 'users', label: 'Người dùng', icon: Users },
+    { key: 'menu', label: 'Thực đơn', icon: UtensilsCrossed },
+    { key: 'promotions', label: 'Khuyến mãi', icon: Gift },
+    { key: 'tables', label: 'Bàn', icon: Table2 },
 ];
 
 export default function AdminPage() {
@@ -42,14 +38,26 @@ export default function AdminPage() {
                 <header className="sticky top-0 z-40 border-b border-slate-800 bg-black/80 backdrop-blur">
                     <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="size-8 rounded-xl bg-slate-900 grid place-items-center text-slate-300">🍣</div>
-                            <h1 className="text-lg font-semibold tracking-tight">Admin Console</h1>
+                            <div className="size-8 rounded-xl bg-slate-900 grid place-items-center text-slate-300">
+                                🍣
+                            </div>
+                            <h1 className="text-lg font-semibold tracking-tight">
+                                Bảng điều khiển quản trị
+                            </h1>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <span className="hidden sm:block text-slate-400">Hello, <span className="text-slate-200 font-medium">{user?.username || 'Admin'}</span></span>
-                            <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 hover:bg-slate-800 active:scale-[.99]">
+                            <span className="hidden sm:block text-slate-400">
+                                Xin chào,{' '}
+                                <span className="text-slate-200 font-medium">
+                                    {user?.username || 'Quản trị viên'}
+                                </span>
+                            </span>
+                            <button
+                                onClick={logout}
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 hover:bg-slate-800 active:scale-[.99]"
+                            >
                                 <LogOut className="size-4" />
-                                <span className="hidden sm:inline">Log out</span>
+                                <span className="hidden sm:inline">Đăng xuất</span>
                             </button>
                         </div>
                     </div>
@@ -71,15 +79,17 @@ export default function AdminPage() {
                                 >
                                     <n.icon className="size-4" />
                                     <span>{n.label}</span>
-                                    {active === n.key && <ChevronRight className="ml-auto size-4 text-slate-400" />}
+                                    {active === n.key && (
+                                        <ChevronRight className="ml-auto size-4 text-slate-400" />
+                                    )}
                                 </button>
                             ))}
                         </nav>
-                        <div className="p-3">
+                        {/* <div className="p-3">
                             <button className="w-full flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-300 hover:bg-slate-900">
-                                <Settings className="size-4" /> Settings
+                                <Settings className="size-4" /> Cài đặt
                             </button>
-                        </div>
+                        </div> */}
                     </aside>
 
                     {/* Content */}
@@ -113,7 +123,10 @@ function MobileNav({ active, onChange }) {
                             className={`flex flex-col items-center gap-1 py-2 text-[11px] ${isActive ? 'text-white' : 'text-slate-400'
                                 }`}
                         >
-                            <Icon className={`size-5 ${isActive ? 'opacity-100' : 'opacity-75'}`} />
+                            <Icon
+                                className={`size-5 ${isActive ? 'opacity-100' : 'opacity-75'
+                                    }`}
+                            />
                             {n.label}
                         </button>
                     );

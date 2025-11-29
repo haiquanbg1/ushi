@@ -6,7 +6,7 @@ module.exports = {
     await queryInterface.bulkInsert('Tables', [
       {
         id: 1,
-        tableNumber: 'T01',
+        tableNumber: '1',
         capacity: 2,
         status: 'available',
         isActive: true,
@@ -15,7 +15,7 @@ module.exports = {
       },
       {
         id: 2,
-        tableNumber: 'T02',
+        tableNumber: '2',
         capacity: 2,
         status: 'occupied',
         isActive: true,
@@ -24,7 +24,7 @@ module.exports = {
       },
       {
         id: 3,
-        tableNumber: 'T03',
+        tableNumber: '3',
         capacity: 4,
         status: 'available',
         isActive: true,
@@ -33,7 +33,7 @@ module.exports = {
       },
       {
         id: 4,
-        tableNumber: 'T04',
+        tableNumber: '4',
         capacity: 4,
         status: 'available',
         isActive: true,
@@ -42,7 +42,7 @@ module.exports = {
       },
       {
         id: 5,
-        tableNumber: 'T05',
+        tableNumber: '5',
         capacity: 6,
         status: 'available',
         isActive: true,
@@ -51,7 +51,7 @@ module.exports = {
       },
       {
         id: 6,
-        tableNumber: 'T06',
+        tableNumber: '6',
         capacity: 6,
         status: 'occupied',
         isActive: true,
@@ -60,7 +60,7 @@ module.exports = {
       },
       {
         id: 7,
-        tableNumber: 'T07',
+        tableNumber: '7',
         capacity: 8,
         status: 'available',
         isActive: true,
@@ -69,7 +69,7 @@ module.exports = {
       },
       {
         id: 8,
-        tableNumber: 'T08',
+        tableNumber: '8',
         capacity: 8,
         status: 'occupied',
         isActive: true,
@@ -78,7 +78,7 @@ module.exports = {
       },
       {
         id: 9,
-        tableNumber: 'T09',
+        tableNumber: '9',
         capacity: 10,
         status: 'available',
         isActive: true,
@@ -87,7 +87,7 @@ module.exports = {
       },
       {
         id: 10,
-        tableNumber: 'T10',
+        tableNumber: '10',
         capacity: 4,
         status: 'available',
         isActive: false,

@@ -13,12 +13,26 @@ export default function StaffPage() {
 
     return (
         <ProtectedRoute requiredRole="Staff">
-            <div className="bg-gray-800 text-white py-4 mb-8">
+            {/* Header đổi sang orange-500 */}
+            <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white py-4 mb-8 shadow-md">
                 <div className="container mx-auto px-4">
                     <div className="flex justify-between items-center">
                         <h1 className="text-2xl font-bold">Ushi Mania</h1>
+
                         <div className="flex items-center space-x-4">
-                            <button onClick={logout} className="btn btn-danger">
+                            {user && (
+                                <span className="text-sm">
+                                    Xin chào,{' '}
+                                    <span className="font-semibold">
+                                        {user.name || user.email}
+                                    </span>
+                                </span>
+                            )}
+                            <button
+                                onClick={logout}
+                                className="px-4 py-2 rounded-xl bg-white/90 text-orange-600 font-semibold
+                     hover:bg-white transition shadow-sm"
+                            >
                                 Đăng xuất
                             </button>
                         </div>
@@ -31,7 +45,7 @@ export default function StaffPage() {
                     <button
                         onClick={() => setActiveTab('tables')}
                         className={`px-4 py-2 rounded-lg ${activeTab === 'tables'
-                            ? 'bg-blue-500 text-white'
+                            ? 'bg-orange-500 text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                     >
@@ -40,21 +54,12 @@ export default function StaffPage() {
                     <button
                         onClick={() => setActiveTab('orders')}
                         className={`px-4 py-2 rounded-lg ${activeTab === 'orders'
-                            ? 'bg-blue-500 text-white'
+                            ? 'bg-orange-500 text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                     >
                         Theo dõi Đơn hàng
                     </button>
-                    {/* <button
-                        onClick={() => setActiveTab('payments')}
-                        className={`px-4 py-2 rounded-lg ${activeTab === 'payments'
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                    >
-                        Xác nhận Thanh toán
-                    </button> */}
                 </div>
 
                 {activeTab === 'tables' && <TableManagement />}

@@ -7,7 +7,6 @@ const roleService = require("../services/roleService");
 const customerService = require("../services/customerService");
 const ms = require("ms");
 
-// Cookie configuration
 const COOKIE_CONFIG = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -17,12 +16,12 @@ const COOKIE_CONFIG = {
 
 const ACCESS_TOKEN_CONFIG = {
     ...COOKIE_CONFIG,
-    maxAge: ms("15m") // 15 phút
+    maxAge: ms("15m")
 };
 
 const REFRESH_TOKEN_CONFIG = {
     ...COOKIE_CONFIG,
-    maxAge: ms("7d") // 7 ngày
+    maxAge: ms("7d")
 };
 
 module.exports = {
@@ -33,12 +32,11 @@ module.exports = {
         try {
             const { username, phone, password, confirmPassword, role = null } = req.body;
 
-            // Validation
             if (!phone || !password || !confirmPassword) {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Phone, password are required"
+                    "Vui lòng nhập đầy đủ số điện thoại và mật khẩu."
                 );
             }
 
@@ -46,7 +44,7 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Password and confirm password do not match"
+                    "Mật khẩu và mật khẩu xác nhận không trùng khớp."
                 );
             }
 
@@ -54,23 +52,21 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Password must be at least 6 characters long"
+                    "Mật khẩu phải có ít nhất 6 ký tự."
                 );
             }
 
-            // Check if phone already exists
             const phoneExists = await userService.checkPhoneExists(phone);
             if (phoneExists) {
                 return errorResponse(
                     res,
                     StatusCodes.CONFLICT,
-                    "Phone already exists"
+                    "Số điện thoại đã tồn tại."
                 );
             }
 
             const roleByName = await roleService.getRoleByName(role);
 
-            // Create user data
             const userData = {
                 username,
                 phone,
@@ -79,8 +75,8 @@ module.exports = {
                 isActive: true
             };
 
-            // Create new user
             const user = await userService.createUser(userData);
+
             const response = {
                 user: {
                     id: user.id,
@@ -89,19 +85,21 @@ module.exports = {
                     isActive: user.isActive,
                     createdAt: user.createdAt
                 },
-            }
+            };
 
             if (role == "Customer") {
-                const customer = await customerService.create({ userId: user.id, fullName: username });
-                response.customer = {
-                    customerId: customer.id,
-                }
+                const customer = await customerService.create({
+                    userId: user.id,
+                    fullName: username
+                });
+
+                response.customer = { customerId: customer.id };
             }
 
             return successResponse(
                 res,
                 StatusCodes.CREATED,
-                "Registration successful",
+                "Đăng ký tài khoản thành công.",
                 response
             );
 
@@ -112,7 +110,7 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.CONFLICT,
-                    "Username already exists"
+                    "Tên người dùng đã tồn tại."
                 );
             }
 
@@ -120,14 +118,14 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Invalid role specified"
+                    "Vai trò không hợp lệ."
                 );
             }
 
             return errorResponse(
                 res,
                 StatusCodes.INTERNAL_SERVER_ERROR,
-                "Registration failed. Please try again."
+                "Đăng ký thất bại. Vui lòng thử lại."
             );
         }
     },
@@ -139,33 +137,28 @@ module.exports = {
         try {
             const { phone, password } = req.body;
 
-            // Validation
             if (!phone || !password) {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Phone and password are required"
+                    "Vui lòng nhập số điện thoại và mật khẩu."
                 );
             }
 
-            // Authenticate user
             const user = await userService.authenticateUser(phone, password);
 
-            // Create tokens
             const accessToken = createAccessToken({ userId: user.id });
             const refreshToken = createRefreshToken({ userId: user.id });
 
-            // Set cookies
             res.cookie("accessToken", accessToken, ACCESS_TOKEN_CONFIG);
             res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_CONFIG);
 
-            // Log successful login
             console.info(`User ${user.username} logged in successfully`);
 
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "Login successful",
+                "Đăng nhập thành công.",
                 {
                     user: {
                         id: user.id,
@@ -180,11 +173,10 @@ module.exports = {
         } catch (error) {
             console.error("Login error:", error.message);
 
-            // Don't reveal too much information about authentication failures
             return errorResponse(
                 res,
                 StatusCodes.UNAUTHORIZED,
-                "Invalid phone or password"
+                "Số điện thoại hoặc mật khẩu không chính xác."
             );
         }
     },
@@ -201,16 +193,13 @@ module.exports = {
                 path: '/'
             };
 
-            // Clear all auth cookies
             res.clearCookie("accessToken", cookieOptions);
             res.clearCookie("refreshToken", cookieOptions);
-
-            console.info(`User ${req.user?.username || 'unknown'} logged out`);
 
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "Logout successful"
+                "Đăng xuất thành công."
             );
 
         } catch (error) {
@@ -218,7 +207,7 @@ module.exports = {
             return errorResponse(
                 res,
                 StatusCodes.INTERNAL_SERVER_ERROR,
-                "An error occurred during logout"
+                "Đã xảy ra lỗi khi đăng xuất."
             );
         }
     },
@@ -233,7 +222,7 @@ module.exports = {
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "User information retrieved successfully",
+                "Lấy thông tin người dùng thành công.",
                 {
                     user: {
                         id: user.id,
@@ -252,7 +241,7 @@ module.exports = {
             return errorResponse(
                 res,
                 StatusCodes.INTERNAL_SERVER_ERROR,
-                "Failed to retrieve user information"
+                "Không thể lấy thông tin người dùng."
             );
         }
     },
@@ -264,12 +253,11 @@ module.exports = {
         try {
             const { oldPassword, newPassword, confirmPassword } = req.body;
 
-            // Validation
             if (!oldPassword || !newPassword || !confirmPassword) {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Old password, new password, and confirm password are required"
+                    "Vui lòng nhập đầy đủ thông tin mật khẩu."
                 );
             }
 
@@ -277,7 +265,7 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "New password and confirm password do not match"
+                    "Mật khẩu mới và mật khẩu xác nhận không trùng khớp."
                 );
             }
 
@@ -285,19 +273,16 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "New password must be at least 6 characters long"
+                    "Mật khẩu mới phải có ít nhất 6 ký tự."
                 );
             }
 
-            // Change password
             await userService.changePassword(req.user.id, oldPassword, newPassword);
-
-            console.info(`User ${req.user.username} changed password successfully`);
 
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "Password changed successfully"
+                "Đổi mật khẩu thành công."
             );
 
         } catch (error) {
@@ -307,20 +292,20 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "Current password is incorrect"
+                    "Mật khẩu hiện tại không đúng."
                 );
             }
 
             return errorResponse(
                 res,
                 StatusCodes.INTERNAL_SERVER_ERROR,
-                "Failed to change password"
+                "Không thể đổi mật khẩu."
             );
         }
     },
 
     /**
-     * Refresh access token
+     * Refresh token
      */
     refreshToken: async (req, res) => {
         try {
@@ -330,15 +315,14 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.UNAUTHORIZED,
-                    "Refresh token not found"
+                    "Không tìm thấy refresh token."
                 );
             }
 
-            // This will be handled by auth middleware, just return success
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "Token refreshed successfully"
+                "Làm mới token thành công."
             );
 
         } catch (error) {
@@ -346,7 +330,7 @@ module.exports = {
             return errorResponse(
                 res,
                 StatusCodes.UNAUTHORIZED,
-                "Invalid refresh token"
+                "Refresh token không hợp lệ."
             );
         }
     },
@@ -359,7 +343,7 @@ module.exports = {
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "User is authenticated",
+                "Người dùng đã đăng nhập.",
                 {
                     isAuthenticated: true,
                     user: {
@@ -377,7 +361,7 @@ module.exports = {
             return errorResponse(
                 res,
                 StatusCodes.UNAUTHORIZED,
-                "User is not authenticated"
+                "Người dùng chưa đăng nhập."
             );
         }
     },
@@ -389,12 +373,11 @@ module.exports = {
         try {
             const { userId, newPassword } = req.body;
 
-            // Validation
             if (!userId || !newPassword) {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "User ID and new password are required"
+                    "Vui lòng nhập đầy đủ ID người dùng và mật khẩu mới."
                 );
             }
 
@@ -402,19 +385,16 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.BAD_REQUEST,
-                    "New password must be at least 6 characters long"
+                    "Mật khẩu mới phải có ít nhất 6 ký tự."
                 );
             }
 
-            // Reset password
             await userService.resetPassword(userId, newPassword);
-
-            console.info(`Admin ${req.user.username} reset password for user ID ${userId}`);
 
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "Password reset successfully"
+                "Đặt lại mật khẩu thành công."
             );
 
         } catch (error) {
@@ -424,15 +404,15 @@ module.exports = {
                 return errorResponse(
                     res,
                     StatusCodes.NOT_FOUND,
-                    "User not found"
+                    "Không tìm thấy người dùng."
                 );
             }
 
             return errorResponse(
                 res,
                 StatusCodes.INTERNAL_SERVER_ERROR,
-                "Failed to reset password"
+                "Không thể đặt lại mật khẩu."
             );
         }
     }
-}
+};

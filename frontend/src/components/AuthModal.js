@@ -25,7 +25,6 @@ export default function AuthModal({
     const [loading, setLoading] = useState(false);
     const { login, register } = useAuth();
 
-    // Đồng bộ mode theo initialMode mỗi khi mở modal
     useEffect(() => {
         if (isOpen) {
             setMode(initialMode);
@@ -34,14 +33,12 @@ export default function AuthModal({
         }
     }, [isOpen, initialMode]);
 
-    // Đóng modal an toàn
     const handleClose = useCallback(() => {
         setFormData(DEFAULT_FORM);
         setError('');
         onClose?.();
     }, [onClose]);
 
-    // ESC để đóng
     useEffect(() => {
         if (!isOpen) return;
         const onKey = (e) => {
@@ -100,7 +97,6 @@ export default function AuthModal({
                     password: formData.password,
                 });
             } else {
-                // gửi cả username để giữ tương thích backend cũ
                 result = await register({
                     username: formData.username,
                     phone: formData.phone,
@@ -109,7 +105,6 @@ export default function AuthModal({
                 });
             }
 
-            // Một số hook trả {success, data, error}; một số throw error — cả hai đều handle
             if (result?.success === false) {
                 setError(result?.error || 'Có lỗi xảy ra');
                 return;
@@ -152,7 +147,7 @@ export default function AuthModal({
                 </h2>
 
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md mb-4">
+                    <div className="bg-orange-50 border border-orange-200 text-orange-700 px-4 py-3 rounded-md mb-4">
                         {error}
                     </div>
                 )}
@@ -168,7 +163,7 @@ export default function AuthModal({
                                 name="username"
                                 value={formData.username}
                                 onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                                 placeholder="Nhập họ tên của bạn"
                                 required
                             />
@@ -184,7 +179,7 @@ export default function AuthModal({
                             name="phone"
                             value={formData.phone}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                             placeholder="Hãy nhập số điện thoại"
                             pattern="^(0[35789])\d{8}$"
                             required
@@ -201,7 +196,7 @@ export default function AuthModal({
                             name="password"
                             value={formData.password}
                             onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                             placeholder="Nhập mật khẩu"
                             minLength={6}
                             required
@@ -219,7 +214,7 @@ export default function AuthModal({
                                     name="confirmPassword"
                                     value={formData.confirmPassword}
                                     onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                                     placeholder="Nhập lại mật khẩu"
                                     required
                                 />
@@ -233,7 +228,7 @@ export default function AuthModal({
                                     name="role"
                                     value={formData.role}
                                     onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                                 >
                                     <option value="Customer">Khách hàng</option>
                                     <option value="Staff">Nhân viên</option>
@@ -245,7 +240,7 @@ export default function AuthModal({
 
                     <button
                         type="submit"
-                        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={loading}
                     >
                         {loading ? 'Đang xử lý...' : mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
@@ -256,7 +251,7 @@ export default function AuthModal({
                     {mode === 'login' ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}
                     <span
                         onClick={toggleMode}
-                        className="text-blue-500 hover:text-blue-600 cursor-pointer underline font-medium"
+                        className="text-orange-500 hover:text-orange-600 cursor-pointer underline font-medium"
                     >
                         {mode === 'login' ? 'Đăng ký' : 'Đăng nhập'}
                     </span>

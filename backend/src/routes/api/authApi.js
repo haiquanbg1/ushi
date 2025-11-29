@@ -27,8 +27,7 @@ const {
  * @desc User login
  * @access Public
  */
-router.post('/login',
-    authRateLimit,           // Rate limit login attempts
+router.post('/login',         // Rate limit login attempts
     sanitizeInput,           // Sanitize input data
     validateLogin,           // Validate login data
     authController.login
@@ -39,8 +38,7 @@ router.post('/login',
  * @desc User Register
  * @access Public
  */
-router.post('/register',
-    authRateLimit,           // Rate limit login attempts
+router.post('/register',         // Rate limit login attempts
     sanitizeInput,           // Sanitize input data
     validateRegister,           // Validate login data
     authController.register
@@ -51,8 +49,7 @@ router.post('/register',
  * @desc User logout
  * @access Private (requires authentication)
  */
-router.post('/logout',
-    apiRateLimit,           // General rate limiting
+router.post('/logout',        // General rate limiting
     authMiddleware,         // Require authentication
     authController.logout
 );
@@ -62,8 +59,7 @@ router.post('/logout',
  * @desc Get current user information
  * @access Private (requires authentication)
  */
-router.get('/me',
-    apiRateLimit,           // General rate limiting
+router.get('/me',          // General rate limiting
     authMiddleware,         // Require authentication
     requireActive,          // Require active account
     authController.me
@@ -74,8 +70,7 @@ router.get('/me',
  * @desc Refresh access token
  * @access Private (requires refresh token)
  */
-router.post('/refresh',
-    apiRateLimit,           // General rate limiting
+router.post('/refresh',         // General rate limiting
     authMiddleware,         // This will handle token refresh
     authController.refreshToken
 );
@@ -85,8 +80,7 @@ router.post('/refresh',
  * @desc Check authentication status
  * @access Private (requires authentication)
  */
-router.get('/check',
-    apiRateLimit,           // General rate limiting
+router.get('/check',        // General rate limiting
     authMiddleware,         // Require authentication
     authController.checkAuth
 );
@@ -96,8 +90,7 @@ router.get('/check',
  * @desc Change user password
  * @access Private (requires authentication)
  */
-router.post('/change-password',
-    passwordRateLimit,      // Strict rate limiting for password operations
+router.post('/change-password',     // Strict rate limiting for password operations
     sanitizeInput,          // Sanitize input data
     authMiddleware,         // Require authentication
     requireActive,          // Require active account
@@ -110,8 +103,7 @@ router.post('/change-password',
  * @desc Reset user password (Admin only)
  * @access Private (Admin only)
  */
-router.post('/reset-password',
-    passwordRateLimit,      // Strict rate limiting for password operations
+router.post('/reset-password',    // Strict rate limiting for password operations
     sanitizeInput,          // Sanitize input data
     authMiddleware,         // Require authentication
     requireAdmin,           // Require admin role
