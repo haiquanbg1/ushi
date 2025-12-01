@@ -1,6 +1,6 @@
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const { cloudinary } = require('./cloudinary');
+const { cloudinary } = require('../utils/cloudinary');
 
 // Cấu hình storage cho Multer với Cloudinary
 const storage = new CloudinaryStorage({
@@ -28,6 +28,6 @@ const uploadMiddleware = multer({
             cb(new Error('Định dạng file không hợp lệ. Chỉ chấp nhận: jpg, png, gif, pdf'));
         }
     }
-}).single('file');
+}).single('image');
 
 module.exports = uploadMiddleware;

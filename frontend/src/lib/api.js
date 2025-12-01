@@ -111,7 +111,9 @@ export const itemAPI = {
     search: (query) => apiClient.get(`/items/search?q=${query}`),
     getByCategory: (categoryId) => apiClient.get(`/items/category/${categoryId}`),
     getById: (id) => apiClient.get(`/items/${id}`),
-    create: (item) => apiClient.post('/items', item),
+    create: (item) => apiClient.post('/items', item, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     update: (id, item) => apiClient.put(`/items/${id}`, item),
     delete: (id) => apiClient.delete(`/items/${id}`),
 };

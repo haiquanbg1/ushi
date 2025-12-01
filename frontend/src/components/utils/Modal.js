@@ -1,13 +1,14 @@
 'use client';
 import { X } from 'lucide-react';
 
-export default function Modal({ open, title, children, onClose }) {
+export default function Modal({ open, title, children, onClose, className = '' }) {
     if (!open) return null;
 
     return (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
             <div
-                className="w-full sm:max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-4"
+                className={`w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 ${className || 'sm:max-w-md' // ✅ Nếu không truyền className thì dùng max-w-md
+                    }`}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between mb-3">

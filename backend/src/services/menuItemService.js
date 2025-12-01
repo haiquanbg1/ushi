@@ -32,7 +32,13 @@ class ItemService {
 
     async createItem(itemData) {
         try {
-            return await Item.create(itemData);
+            // Validate dữ liệu trước khi tạo (tùy chọn)
+            if (!itemData.image) {
+                throw new Error('Image URL is required');
+            }
+
+            const newItem = await Item.create(itemData);
+            return newItem;
         } catch (error) {
             throw new Error(`Error creating menu item: ${error.message}`);
         }

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import Modal from '../utils/Modal';
 import { itemAPI, comboAPI, categoryAPI, comboItemAPI } from '@/lib/api';
@@ -13,23 +13,32 @@ function MenuSection() {
     const [openItem, setOpenItem] = useState(false);
     const [openCombo, setOpenCombo] = useState(false);
     const [openCategory, setOpenCategory] = useState(false);
-    const [openComboItems, setOpenComboItems] = useState(false);
     const [loading, setLoading] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [editingCombo, setEditingCombo] = useState(null);
     const [editingCategory, setEditingCategory] = useState(null);
+
+    // dropdown & modal combo items
     const [selectedCombo, setSelectedCombo] = useState(null);
     const [comboItemsList, setComboItemsList] = useState([]);
+    const [newComboItem, setNewComboItem] = useState({
+        itemId: '',
+        quantity: 1,
+        isRequired: false,
+        isDefault: false
+    });
+
     const [formErrors, setFormErrors] = useState({});
 
     const toast = useToast();
 
+    // === FORM STATES ===
     const [itemForm, setItemForm] = useState({
         name: '',
         price: '',
         categoryId: '',
         description: '',
-        image: '',
+        imageFile: null,
         isAvailable: true,
         isActive: true,
         sortOrder: 0
@@ -49,13 +58,6 @@ function MenuSection() {
         image: '',
         sortOrder: 0,
         isActive: true
-    });
-
-    const [newComboItem, setNewComboItem] = useState({
-        itemId: '',
-        quantity: 1,
-        isRequired: false,
-        isDefault: false
     });
 
     const load = async () => {
@@ -115,7 +117,7 @@ function MenuSection() {
                 price: item.price,
                 categoryId: item.categoryId,
                 description: item.description || '',
-                image: item.image || '',
+                imageFile: item.image || null,
                 isAvailable: item.isAvailable,
                 isActive: item.isActive,
                 sortOrder: item.sortOrder || 0
@@ -127,7 +129,7 @@ function MenuSection() {
                 price: '',
                 categoryId: '',
                 description: '',
-                image: '',
+                imageFile: null,
                 isAvailable: true,
                 isActive: true,
                 sortOrder: 0
@@ -141,22 +143,24 @@ function MenuSection() {
         if (!validateItemForm()) return;
 
         try {
-            const data = {
-                name: itemForm.name.trim(),
-                price: parseFloat(itemForm.price),
-                categoryId: parseInt(itemForm.categoryId),
-                description: itemForm.description.trim(),
-                image: itemForm.image.trim(),
-                isAvailable: itemForm.isAvailable,
-                isActive: itemForm.isActive,
-                sortOrder: parseInt(itemForm.sortOrder)
-            };
+            const formData = new FormData();
+            formData.append('name', itemForm.name.trim());
+            formData.append('price', String(parseFloat(itemForm.price)));
+            formData.append('categoryId', String(parseInt(itemForm.categoryId)));
+            formData.append('description', itemForm.description.trim());
+            formData.append('isAvailable', String(itemForm.isAvailable));
+            formData.append('isActive', String(itemForm.isActive));
+            formData.append('sortOrder', String(parseInt(String(itemForm.sortOrder)) || 0));
+
+            if (itemForm.imageFile) {
+                formData.append('image', itemForm.imageFile);
+            }
 
             if (editingItem) {
-                await itemAPI.update(editingItem.id, data);
+                await itemAPI.update(editingItem.id, formData);
                 toast.success('Cập nhật món ăn thành công.', { title: 'Thành công' });
             } else {
-                await itemAPI.create(data);
+                await itemAPI.create(formData);
                 toast.success('Tạo món ăn mới thành công.', { title: 'Thành công' });
             }
 
@@ -199,6 +203,8 @@ function MenuSection() {
 
     const openComboModal = (combo = null) => {
         setFormErrors({});
+        setNewComboItem({ itemId: '', quantity: 1, isRequired: false, isDefault: false });
+
         if (combo) {
             setEditingCombo(combo);
             setComboForm({
@@ -208,6 +214,9 @@ function MenuSection() {
                 image: combo.image || '',
                 isActive: combo.isActive
             });
+
+            setSelectedCombo(combo);
+            loadComboItems(combo.id);
         } else {
             setEditingCombo(null);
             setComboForm({
@@ -217,6 +226,9 @@ function MenuSection() {
                 image: '',
                 isActive: true
             });
+
+            setSelectedCombo(null);
+            setComboItemsList([]);
         }
         setOpenCombo(true);
     };
@@ -235,16 +247,34 @@ function MenuSection() {
             };
 
             if (editingCombo) {
-                await comboAPI.update(editingCombo.id, data);
+                const res = await comboAPI.update(editingCombo.id, data);
+                const updated = res?.data?.data || { ...editingCombo, ...data };
+
+                setEditingCombo(updated);
+                setSelectedCombo(updated);
+                await load();
+                await loadComboItems(updated.id);
+
                 toast.success('Cập nhật combo thành công.', { title: 'Thành công' });
             } else {
-                await comboAPI.create(data);
-                toast.success('Tạo combo mới thành công.', { title: 'Thành công' });
+                const res = await comboAPI.create(data);
+                const created = res?.data?.data;
+
+                toast.success('Tạo combo mới thành công. Bạn có thể thêm món cho combo này phía dưới.', {
+                    title: 'Thành công'
+                });
+
+                if (created) {
+                    setEditingCombo(created);
+                    setSelectedCombo(created);
+                    await load();
+                    await loadComboItems(created.id);
+                } else {
+                    await load();
+                }
             }
 
-            setOpenCombo(false);
-            setEditingCombo(null);
-            await load();
+            // Không đóng modal sau khi lưu combo
         } catch (error) {
             console.error('Error saving combo:', error);
             const msg = error?.response?.data?.message || 'Không thể lưu combo. Vui lòng thử lại.';
@@ -262,6 +292,19 @@ function MenuSection() {
             console.error('Error deleting combo:', error);
             const msg = error?.response?.data?.message || 'Không thể xóa combo. Vui lòng thử lại.';
             toast.error(msg, { title: 'Lỗi' });
+        }
+    };
+
+    // === toggle dropdown combo items: chỉ xem list món ===
+    const toggleComboItems = (combo) => {
+        if (selectedCombo?.id === combo.id) {
+            setSelectedCombo(null);
+            setComboItemsList([]);
+            setNewComboItem({ itemId: '', quantity: 1, isRequired: false, isDefault: false });
+        } else {
+            setSelectedCombo(combo);
+            setNewComboItem({ itemId: '', quantity: 1, isRequired: false, isDefault: false });
+            loadComboItems(combo.id);
         }
     };
 
@@ -311,7 +354,7 @@ function MenuSection() {
                 categoryName: categoryForm.categoryName.trim(),
                 description: categoryForm.description.trim(),
                 image: categoryForm.image.trim(),
-                sortOrder: parseInt(categoryForm.sortOrder),
+                sortOrder: parseInt(String(categoryForm.sortOrder)),
                 isActive: categoryForm.isActive
             };
 
@@ -347,15 +390,12 @@ function MenuSection() {
     };
 
     // ==================== COMBO ITEMS HANDLERS ====================
-    const openComboItemsModal = (combo) => {
-        setSelectedCombo(combo);
-        setNewComboItem({ itemId: '', quantity: 1, isRequired: false, isDefault: false });
-        loadComboItems(combo.id);
-        setOpenComboItems(true);
-    };
-
     const addComboItem = async (e) => {
         e.preventDefault();
+        if (!selectedCombo) {
+            toast.error('Chưa xác định combo.', { title: 'Lỗi' });
+            return;
+        }
         if (!newComboItem.itemId) {
             toast.error('Vui lòng chọn món trước khi thêm.', { title: 'Thiếu thông tin' });
             return;
@@ -365,7 +405,7 @@ function MenuSection() {
             await comboItemAPI.create({
                 comboId: selectedCombo.id,
                 itemId: parseInt(newComboItem.itemId),
-                quantity: parseInt(newComboItem.quantity),
+                quantity: parseInt(String(newComboItem.quantity)),
                 isRequired: newComboItem.isRequired,
                 isDefault: newComboItem.isDefault
             });
@@ -382,6 +422,7 @@ function MenuSection() {
     };
 
     const deleteComboItem = async (id) => {
+        if (!selectedCombo) return;
         if (!window.confirm('Bạn có chắc muốn xóa?')) return;
         try {
             await comboItemAPI.delete(id);
@@ -400,6 +441,99 @@ function MenuSection() {
 
     // ======= Small helpers (format) =======
     const money = (v) => (Number(v || 0)).toLocaleString() + ' đ';
+
+    // ======= Reusable section: quản lý món trong combo =======
+    const ComboItemsSection = ({ showForm = true }) => {
+        if (!selectedCombo) return null;
+        return (
+            <div className="mt-3 space-y-4 rounded-xl border border-slate-800 bg-slate-950 p-3">
+                {showForm && (
+                    <form onSubmit={addComboItem} className="space-y-3 border-b border-slate-800 pb-4">
+                        <select
+                            className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
+                            value={newComboItem.itemId}
+                            onChange={e => setNewComboItem(f => ({ ...f, itemId: e.target.value }))}
+                        >
+                            <option value="">Chọn món</option>
+                            {items.map(it => (
+                                <option key={it.id} value={it.id}>
+                                    {it.name} - {money(it.price)}
+                                </option>
+                            ))}
+                        </select>
+
+                        <input
+                            type="number"
+                            min={1}
+                            className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
+                            placeholder="Số lượng"
+                            value={newComboItem.quantity}
+                            onChange={e => setNewComboItem(f => ({ ...f, quantity: Number(e.target.value) || 1 }))}
+                        />
+
+                        <div className="flex gap-3">
+                            <label className="flex items-center gap-2 text-sm text-slate-300">
+                                <input
+                                    type="checkbox"
+                                    checked={newComboItem.isRequired}
+                                    onChange={e => setNewComboItem(f => ({ ...f, isRequired: e.target.checked }))}
+                                />
+                                Bắt buộc
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-slate-300">
+                                <input
+                                    type="checkbox"
+                                    checked={newComboItem.isDefault}
+                                    onChange={e => setNewComboItem(f => ({ ...f, isDefault: e.target.checked }))}
+                                />
+                                Mặc định
+                            </label>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="w-full rounded-lg bg-emerald-600 py-2 text-sm hover:bg-emerald-700"
+                        >
+                            Thêm món
+                        </button>
+                    </form>
+                )}
+
+                {/* LIST: max 4 item, còn lại cuộn */}
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {comboItemsList.length === 0 ? (
+                        <p className="text-xs text-slate-400">Chưa có món nào</p>
+                    ) : (
+                        comboItemsList.map(ci => (
+                            <div
+                                key={ci.id}
+                                className="flex items-center justify-between bg-slate-900 p-2 rounded-lg"
+                            >
+                                <div className="text-sm">
+                                    <p className="text-slate-300">
+                                        {ci.item?.name} x{ci.quantity}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        {ci.isRequired ? 'Bắt buộc' : ''}{' '}
+                                        {ci.isDefault ? '• Mặc định' : ''}
+                                    </p>
+                                </div>
+
+                                {showForm && (
+                                    <button
+                                        onClick={() => deleteComboItem(ci.id)}
+                                        className="p-1.5 rounded-lg bg-rose-900/50 hover:bg-rose-900 text-rose-300"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="space-y-4">
@@ -572,17 +706,80 @@ function MenuSection() {
                             <textarea
                                 className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
                                 placeholder="Mô tả (tùy chọn)"
-                                rows="2"
+                                rows={2}
                                 value={itemForm.description}
                                 onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))}
                             />
 
-                            <input
-                                className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
-                                placeholder="URL hình ảnh (tùy chọn)"
-                                value={itemForm.image}
-                                onChange={e => setItemForm(f => ({ ...f, image: e.target.value }))}
-                            />
+                            <div>
+                                <label className="text-xs text-slate-400 block mb-1">Ảnh món</label>
+
+                                {/* input ẩn */}
+                                <input
+                                    type="file"
+                                    id="itemImageInput"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => {
+                                        const file = e.target.files?.[0] || null;
+                                        setItemForm(f => ({ ...f, imageFile: file }));
+                                    }}
+                                />
+
+                                {!itemForm.imageFile ? (
+                                    // Không có file / link -> hiện khung chọn ảnh
+                                    <label
+                                        htmlFor="itemImageInput"
+                                        className="flex flex-col items-center justify-center w-32 h-32 rounded-lg bg-slate-900 border-2 border-dashed border-slate-700 cursor-pointer hover:border-slate-600 hover:bg-slate-800 transition-colors"
+                                    >
+                                        <svg className="w-8 h-8 text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                        <span className="text-xs text-slate-400 text-center px-2">Chọn ảnh</span>
+                                    </label>
+                                ) : (
+                                    // Có imageFile: có thể là File **hoặc** link string
+                                    <div className="relative w-32 h-32 group">
+                                        <img
+                                            src={
+                                                typeof itemForm.imageFile === 'string'
+                                                    ? itemForm.imageFile
+                                                    : URL.createObjectURL(itemForm.imageFile)
+                                            }
+                                            alt="Preview"
+                                            className="w-full h-full object-cover rounded-lg"
+                                        />
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center gap-1">
+                                            <label
+                                                htmlFor="itemImageInput"
+                                                className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 cursor-pointer text-xs"
+                                            >
+                                                Đổi
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setItemForm(f => ({ ...f, imageFile: null }))}
+                                                className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-xs"
+                                            >
+                                                Xóa
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {itemForm.imageFile && (
+                                    <p className="text-xs text-slate-400 mt-1 truncate max-w-[128px]">
+                                        {/* {typeof itemForm.imageFile === 'string'
+                                            ? itemForm.imageFile
+                                            : itemForm.imageFile.name} */}
+                                    </p>
+                                )}
+                            </div>
 
                             <div className="flex items-center gap-2">
                                 <input
@@ -591,7 +788,7 @@ function MenuSection() {
                                     checked={itemForm.isAvailable}
                                     onChange={e => setItemForm(f => ({ ...f, isAvailable: e.target.checked }))}
                                 />
-                                <label htmlFor="isAvailable" className="text-xs text-slate-400">Còn hàng</label>
+                                <label htmlFor="isAvailable" className="text-xs text-slate-400">Hoạt động</label>
                             </div>
 
                             <button type="submit" className="w-full rounded-xl bg-emerald-600 py-2 font-medium hover:bg-emerald-700">
@@ -626,11 +823,13 @@ function MenuSection() {
                                     </div>
                                     <div className="flex shrink-0 gap-2">
                                         <button
-                                            onClick={() => openComboItemsModal(cb)}
+                                            onClick={() => toggleComboItems(cb)}
                                             className="p-1.5 rounded-lg bg-blue-900/50 hover:bg-blue-900 text-blue-300"
-                                            title="Quản lý món"
+                                            title="Xem món trong combo"
                                         >
-                                            <ChevronDown className="size-4" />
+                                            <ChevronDown
+                                                className={`size-4 transition-transform ${selectedCombo?.id === cb.id ? 'rotate-180' : ''}`}
+                                            />
                                         </button>
                                         <button
                                             onClick={() => openComboModal(cb)}
@@ -648,6 +847,8 @@ function MenuSection() {
                                         </button>
                                     </div>
                                 </div>
+
+                                {selectedCombo?.id === cb.id && <ComboItemsSection showForm={false} />}
                             </div>
                         ))}
                         {combos.length === 0 && <div className="text-center text-sm text-slate-400">Chưa có combo nào</div>}
@@ -667,48 +868,63 @@ function MenuSection() {
                             </thead>
                             <tbody>
                                 {combos.map((cb, i) => (
-                                    <tr key={cb.id} className="border-t border-slate-800">
-                                        <td className="px-3 py-2">{i + 1}</td>
-                                        <td className="px-3 py-2 text-slate-200">{cb.name}</td>
-                                        <td className="px-3 py-2">{money(cb.price)}</td>
-                                        <td className="px-3 py-2">{cb.isActive ? 'Hoạt động' : 'Tạm dừng'}</td>
-                                        <td className="px-3 py-2">
-                                            <div className="flex justify-end gap-2 pr-2">
-                                                <button
-                                                    onClick={() => openComboItemsModal(cb)}
-                                                    className="p-1.5 rounded-lg bg-blue-900/50 hover:bg-blue-900 text-blue-300"
-                                                    title="Quản lý món"
-                                                >
-                                                    <ChevronDown className="size-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => openComboModal(cb)}
-                                                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                                                    title="Sửa"
-                                                >
-                                                    <Pencil className="size-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => deleteCombo(cb.id)}
-                                                    className="p-1.5 rounded-lg bg-rose-900/50 hover:bg-rose-900 text-rose-300"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 className="size-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <React.Fragment key={cb.id}>
+                                        <tr className="border-t border-slate-800">
+                                            <td className="px-3 py-2">{i + 1}</td>
+                                            <td className="px-3 py-2 text-slate-200">{cb.name}</td>
+                                            <td className="px-3 py-2">{money(cb.price)}</td>
+                                            <td className="px-3 py-2">{cb.isActive ? 'Hoạt động' : 'Tạm dừng'}</td>
+                                            <td className="px-3 py-2">
+                                                <div className="flex justify-end gap-2 pr-2">
+                                                    <button
+                                                        onClick={() => toggleComboItems(cb)}
+                                                        className="p-1.5 rounded-lg bg-blue-900/50 hover:bg-blue-900 text-blue-300"
+                                                        title="Xem món trong combo"
+                                                    >
+                                                        <ChevronDown
+                                                            className={`size-4 transition-transform ${selectedCombo?.id === cb.id ? 'rotate-180' : ''}`}
+                                                        />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openComboModal(cb)}
+                                                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+                                                        title="Sửa"
+                                                    >
+                                                        <Pencil className="size-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteCombo(cb.id)}
+                                                        className="p-1.5 rounded-lg bg-rose-900/50 hover:bg-rose-900 text-rose-300"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        {selectedCombo?.id === cb.id && (
+                                            <tr key={`${cb.id}-dropdown`}>
+                                                <td colSpan={5} className="px-3 pb-4">
+                                                    <ComboItemsSection showForm={false} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
+
                                 {combos.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-3 py-6 text-center text-slate-400">Chưa có combo nào</td>
+                                        <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+                                            Chưa có combo nào
+                                        </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
 
-                    {/* Combo Modal */}
+                    {/* Combo Modal: CRUD combo + add items */}
                     <Modal
                         open={openCombo}
                         title={editingCombo ? 'Sửa combo' : 'Thêm combo'}
@@ -716,145 +932,106 @@ function MenuSection() {
                             setOpenCombo(false);
                             setEditingCombo(null);
                             setFormErrors({});
-                        }}
-                    >
-                        <form onSubmit={saveCombo} className="space-y-3">
-                            <div>
-                                <label className="text-xs text-slate-400">Tên combo</label>
-                                <input
-                                    className={`w-full rounded-lg bg-slate-900 border p-2 ${formErrors.name ? 'border-rose-500' : 'border-slate-800'}`}
-                                    placeholder="Tên combo"
-                                    value={comboForm.name}
-                                    onChange={e => setComboForm(f => ({ ...f, name: e.target.value }))}
-                                />
-                                {formErrors.name && <p className="text-xs text-rose-400 mt-1">{formErrors.name}</p>}
-                            </div>
-
-                            <div>
-                                <label className="text-xs text-slate-400">Giá</label>
-                                <input
-                                    type="number"
-                                    step="1000"
-                                    className={`w-full rounded-lg bg-slate-900 border p-2 ${formErrors.price ? 'border-rose-500' : 'border-slate-800'}`}
-                                    placeholder="Giá"
-                                    value={comboForm.price}
-                                    onChange={e => setComboForm(f => ({ ...f, price: e.target.value }))}
-                                />
-                                {formErrors.price && <p className="text-xs text-rose-400 mt-1">{formErrors.price}</p>}
-                            </div>
-
-                            <textarea
-                                className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
-                                placeholder="Mô tả (tùy chọn)"
-                                rows="2"
-                                value={comboForm.description}
-                                onChange={e => setComboForm(f => ({ ...f, description: e.target.value }))}
-                            />
-
-                            <input
-                                className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
-                                placeholder="URL hình ảnh (tùy chọn)"
-                                value={comboForm.image}
-                                onChange={e => setComboForm(f => ({ ...f, image: e.target.value }))}
-                            />
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="comboIsActive"
-                                    checked={comboForm.isActive}
-                                    onChange={e => setComboForm(f => ({ ...f, isActive: e.target.checked }))}
-                                />
-                                <label htmlFor="comboIsActive" className="text-xs text-slate-400">Hoạt động</label>
-                            </div>
-
-                            <button type="submit" className="w-full rounded-xl bg-emerald-600 py-2 font-medium hover:bg-emerald-700">
-                                {editingCombo ? 'Cập nhật' : 'Tạo combo'}
-                            </button>
-                        </form>
-                    </Modal>
-
-                    {/* Combo Items Modal */}
-                    <Modal
-                        open={openComboItems}
-                        title={`Quản lý món trong combo: ${selectedCombo?.name || ''}`}
-                        onClose={() => {
-                            setOpenComboItems(false);
                             setSelectedCombo(null);
                             setComboItemsList([]);
+                            setNewComboItem({ itemId: '', quantity: 1, isRequired: false, isDefault: false });
                         }}
+                        className="max-w-5xl"
                     >
-                        <div className="space-y-4">
-                            <form onSubmit={addComboItem} className="space-y-3 border-b border-slate-800 pb-4">
-                                <select
-                                    className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
-                                    value={newComboItem.itemId}
-                                    onChange={e => setNewComboItem(f => ({ ...f, itemId: e.target.value }))}
-                                >
-                                    <option value="">Chọn món</option>
-                                    {items.map(it => (
-                                        <option key={it.id} value={it.id}>
-                                            {it.name} - {money(it.price)}
-                                        </option>
-                                    ))}
-                                </select>
+                        {/* Wrapper 2 cột */}
+                        <div className="md:grid md:grid-cols-[1.1fr_1.4fr] md:gap-6 md:items-start space-y-4 md:space-y-0">
+                            {/* LEFT: card thông tin combo */}
+                            <form
+                                onSubmit={saveCombo}
+                                className="rounded-2xl bg-slate-950/80 border border-slate-800 px-4 py-4 space-y-3 shadow-sm"
+                            >
+                                <h4 className="text-xs font-semibold text-slate-300 mb-1">Thông tin combo</h4>
 
-                                <input
-                                    type="number"
-                                    min="1"
-                                    className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
-                                    placeholder="Số lượng"
-                                    value={newComboItem.quantity}
-                                    onChange={e => setNewComboItem(f => ({ ...f, quantity: e.target.value }))}
-                                />
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-slate-400">Tên combo</label>
+                                    <input
+                                        className={`w-full rounded-lg bg-slate-900 border px-3 py-2 text-sm ${formErrors.name ? 'border-rose-500' : 'border-slate-800'
+                                            }`}
+                                        placeholder="Tên combo"
+                                        value={comboForm.name}
+                                        onChange={e => setComboForm(f => ({ ...f, name: e.target.value }))}
+                                    />
+                                    {formErrors.name && (
+                                        <p className="text-xs text-rose-400 mt-0.5">{formErrors.name}</p>
+                                    )}
+                                </div>
 
-                                <div className="flex gap-3">
-                                    <label className="flex items-center gap-2 text-sm text-slate-300">
-                                        <input
-                                            type="checkbox"
-                                            checked={newComboItem.isRequired}
-                                            onChange={e => setNewComboItem(f => ({ ...f, isRequired: e.target.checked }))}
-                                        />
-                                        Bắt buộc
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-300">
-                                        <input
-                                            type="checkbox"
-                                            checked={newComboItem.isDefault}
-                                            onChange={e => setNewComboItem(f => ({ ...f, isDefault: e.target.checked }))}
-                                        />
-                                        Mặc định
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-slate-400">Giá</label>
+                                    <input
+                                        type="number"
+                                        step="1000"
+                                        className={`w-full rounded-lg bg-slate-900 border px-3 py-2 text-sm ${formErrors.price ? 'border-rose-500' : 'border-slate-800'
+                                            }`}
+                                        placeholder="Giá"
+                                        value={comboForm.price}
+                                        onChange={e => setComboForm(f => ({ ...f, price: e.target.value }))}
+                                    />
+                                    {formErrors.price && (
+                                        <p className="text-xs text-rose-400 mt-0.5">{formErrors.price}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-slate-400">Mô tả</label>
+                                    <textarea
+                                        className="w-full rounded-lg bg-slate-900 border border-slate-800 px-3 py-2 text-sm"
+                                        placeholder="Mô tả (tùy chọn)"
+                                        rows={3}
+                                        value={comboForm.description}
+                                        onChange={e => setComboForm(f => ({ ...f, description: e.target.value }))}
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs text-slate-400">URL hình ảnh</label>
+                                    <input
+                                        className="w-full rounded-lg bg-slate-900 border border-slate-800 px-3 py-2 text-sm"
+                                        placeholder="URL hình ảnh (tùy chọn)"
+                                        value={comboForm.image}
+                                        onChange={e => setComboForm(f => ({ ...f, image: e.target.value }))}
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-1">
+                                    <input
+                                        type="checkbox"
+                                        id="comboIsActive"
+                                        checked={comboForm.isActive}
+                                        onChange={e => setComboForm(f => ({ ...f, isActive: e.target.checked }))}
+                                    />
+                                    <label htmlFor="comboIsActive" className="text-xs text-slate-400">
+                                        Hoạt động
                                     </label>
                                 </div>
 
-                                <button type="submit" className="w-full rounded-lg bg-emerald-600 py-2 text-sm hover:bg-emerald-700">
-                                    Thêm món
+                                <button
+                                    type="submit"
+                                    className="mt-2 w-full rounded-xl bg-emerald-600 py-2 text-sm font-medium hover:bg-emerald-700"
+                                >
+                                    {editingCombo ? 'Cập nhật' : 'Tạo combo'}
                                 </button>
                             </form>
 
-                            <div className="space-y-2">
-                                <h3 className="font-semibold text-slate-300">Các món trong combo:</h3>
-                                {comboItemsList.length === 0 ? (
-                                    <p className="text-xs text-slate-400">Chưa có món nào</p>
-                                ) : (
-                                    comboItemsList.map(ci => (
-                                        <div key={ci.id} className="flex items-center justify-between bg-slate-900 p-2 rounded-lg">
-                                            <div className="text-sm">
-                                                <p className="text-slate-300">{ci.item?.name} x{ci.quantity}</p>
-                                                <p className="text-xs text-slate-500">
-                                                    {ci.isRequired ? 'Bắt buộc' : ''} {ci.isDefault ? '• Mặc định' : ''}
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={() => deleteComboItem(ci.id)}
-                                                className="p-1.5 rounded-lg bg-rose-900/50 hover:bg-rose-900 text-rose-300"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                            {/* RIGHT: card món trong combo – chỉ hiện khi đã có combo */}
+                            {editingCombo && selectedCombo && (
+                                <div className="rounded-2xl bg-slate-950/80 border border-slate-800 px-4 py-4 shadow-sm">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-xs font-semibold text-slate-300">
+                                            Món trong combo
+                                        </h4>
+                                        <p className="text-[11px] text-slate-500">
+                                            {comboItemsList.length} món
+                                        </p>
+                                    </div>
+                                    <ComboItemsSection showForm={true} />
+                                </div>
+                            )}
                         </div>
                     </Modal>
                 </>
@@ -984,7 +1161,7 @@ function MenuSection() {
                             <textarea
                                 className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
                                 placeholder="Mô tả (tùy chọn)"
-                                rows="2"
+                                rows={2}
                                 value={categoryForm.description}
                                 onChange={e => setCategoryForm(f => ({ ...f, description: e.target.value }))}
                             />
@@ -1001,7 +1178,7 @@ function MenuSection() {
                                 className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
                                 placeholder="Thứ tự sắp xếp"
                                 value={categoryForm.sortOrder}
-                                onChange={e => setCategoryForm(f => ({ ...f, sortOrder: e.target.value }))}
+                                onChange={e => setCategoryForm(f => ({ ...f, sortOrder: Number(e.target.value) || 0 }))}
                             />
 
                             <div className="flex items-center gap-2">
@@ -1026,4 +1203,3 @@ function MenuSection() {
 }
 
 export default MenuSection;
-
