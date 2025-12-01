@@ -48,6 +48,7 @@ exports.remove = async (req, res) => {
 exports.getByUser = async (req, res) => {
     try {
         const data = await CustomerService.getByUser(req.params.userId);
+        console.log(data)
         res.json({ ok: true, data });
     } catch (e) {
         res.status(404).json({ ok: false, message: e.message });

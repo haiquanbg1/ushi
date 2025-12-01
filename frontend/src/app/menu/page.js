@@ -255,6 +255,16 @@ export default function Page() {
             customerId: tableStore.customerId,
             authInitialized,
         });
+
+        const demo = async () => {
+            if (auth.user && tableStore.customerId == 1) {
+                const customer = await customerAPI.getByUser(auth.user.id);
+                tableStore.setCustomer(customer?.data?.data?.id || 1);
+                setLoggedInCustomerId(customer?.data?.data?.id || null);
+            }
+        }
+
+        demo()
     }, [auth.loading, auth.user, sessionChecked, showAuthModal, tableStore.customerId, authInitialized]);
 
     // Initialize Auth
@@ -408,12 +418,15 @@ export default function Page() {
     const handleAuthModalClose = async (action, userData) => {
         setShowAuthModal(false);
 
+        console.log(action)
+
         if (action === 'skip') {
             tableStore.setCustomer(1);
             setAuthInitialized(true);
             pushToast({ message: 'Đang sử dụng tài khoản khách' });
         } else if (action === 'login' && userData) {
             try {
+                console.log('User logged in:', userData);
                 const response = await customerAPI.getByUser(userData.id);
                 const customer = response.data?.data;
 
@@ -435,8 +448,6 @@ export default function Page() {
                 setLoggedInCustomerId(null);
                 setAuthInitialized(true);
             }
-        } else if (action === 'register' && userData) {
-            await createCustomerForNewUser(userData);
         }
     };
 
@@ -535,6 +546,7 @@ export default function Page() {
                 }
                 tableNumber={tableStore.tableId}
                 onLogout={onLogout}
+                onLoginClick={() => setShowAuthModal(true)}
             />
 
             <div className="lg:flex">
@@ -680,7 +692,6 @@ export default function Page() {
                                     <HistoryPanel
                                         onOpenDetail={setSelectedOrder}
                                         auth={auth}
-                                        customerId={loggedInCustomerId}
                                     />
                                 ) : (
                                     <EmptyState
@@ -723,6 +734,7 @@ export default function Page() {
                 cart={cart}
                 customerId={tableStore.customerId}
                 tableId={tableStore.tableId}
+                setCustomerId={setLoggedInCustomerId}
             />
             <ItemModal
                 item={selectedItem}
@@ -739,6 +751,7 @@ export default function Page() {
                 open={showAuthModal}
                 onClose={handleAuthModalClose}
                 tableNumber={tableStore.tableId}
+                setCustomerId={setLoggedInCustomerId}
             />
 
             <ToastHost toasts={toasts} setToasts={setToasts} />

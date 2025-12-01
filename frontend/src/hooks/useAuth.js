@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
             const { user } = response.data.data;
 
             setUser(user);
-            return { success: true };
+            return { success: true, id: user.id };
         } catch (error) {
             return {
                 success: false,
@@ -71,12 +71,20 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateUser = async (updatedData) => {
+        setUser((prevUser) => ({
+            ...prevUser,
+            ...updatedData,
+        }));
+    };
+
     const value = {
         user,
         login,
         register,
         logout,
         loading,
+        updateUser,
         isAuthenticated: !!user,
     };
 

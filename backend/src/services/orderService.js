@@ -167,8 +167,6 @@ class OrderService {
                     }
                 },
                 include: [
-                    { model: Customer, as: 'customer' },
-                    { model: Table, as: 'table' },
                     { model: OrderDetail, as: 'orderDetails' }
                 ],
                 order: [['createdAt', 'DESC']]

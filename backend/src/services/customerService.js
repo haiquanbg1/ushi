@@ -200,8 +200,7 @@ class CustomerService {
 
     async getByUser(userId) {
         const customer = await Customer.findOne({
-            where: { userId },
-            include: [{ model: User, as: 'user' }]
+            where: { userId }
         });
 
         if (!customer) {

@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { X, Minus, Plus } from 'lucide-react';
-import { orderAPI, orderDetailAPI } from '@/lib/api';
+import { orderAPI, orderDetailAPI, customerAPI } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 
 const tone = {
     card: 'bg-white/90 backdrop-blur-sm ring-1 ring-orange-100 shadow-sm',
@@ -10,8 +11,9 @@ const tone = {
 
 const GUEST_ORDER_ID_KEY = 'guest-order-id';
 
-export default function CartDrawer({ open, onClose, cart, customerId, tableId }) {
+export default function CartDrawer({ open, onClose, cart, customerId, tableId, setCustomerId }) {
     const [placing, setPlacing] = useState(false);
+    const auth = useAuth();
 
     const subtotal = useMemo(
         () => cart.items.reduce((s, i) => s + i.price * i.quantity, 0),
@@ -21,7 +23,13 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId })
     const handlePlaceOrder = async () => {
         if (cart.items.length === 0) return;
 
-        const effectiveCustomerId = customerId || 1;
+        if (!customerId && auth?.user) {
+            const customer = await customerAPI.getByUser(auth.user.id);
+            customerId = customer?.data?.data?.id;
+        }
+        console.log(customerId)
+
+        let effectiveCustomerId = customerId || 1;
         const isGuest = !customerId || customerId === 1;
 
         setPlacing(true);
@@ -84,6 +92,12 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId })
                 if (!order?.id) throw new Error('Không thể thêm món vào đơn hàng');
             } else {
                 // Create new order – dùng subtotal, không trừ mã giảm giá nữa
+                if (effectiveCustomerId === 1) {
+                    const customer = await customerAPI.create({})
+                    effectiveCustomerId = customer?.data?.data?.id;
+                    setCustomerId(effectiveCustomerId);
+                }
+
                 const createRes = await orderAPI.create({
                     customerId: effectiveCustomerId,
                     tableId: tableId ?? null,
@@ -180,9 +194,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId })
                                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
                                                 <div className="flex items-center gap-1.5 sm:gap-2">
                                                     <button
-                                                        onClick={() =>
-                                                            cart.decrease?.(i.id)
-                                                        }
+                                                        onClick={() => cart.dec?.(i.id)}
                                                         className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-orange-50 hover:bg-orange-100 active:scale-95 transition"
                                                     >
                                                         <Minus
@@ -194,9 +206,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId })
                                                         {i.quantity}
                                                     </span>
                                                     <button
-                                                        onClick={() =>
-                                                            cart.increase?.(i.id)
-                                                        }
+                                                        onClick={() => cart.add?.(i)}
                                                         className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-orange-50 hover:bg-orange-100 active:scale-95 transition"
                                                     >
                                                         <Plus

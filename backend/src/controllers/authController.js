@@ -30,7 +30,7 @@ module.exports = {
      */
     register: async (req, res) => {
         try {
-            const { username, phone, password, confirmPassword, role = null } = req.body;
+            const { username, phone, password, confirmPassword, role = "Customer" } = req.body;
 
             if (!phone || !password || !confirmPassword) {
                 return errorResponse(

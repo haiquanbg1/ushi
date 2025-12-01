@@ -206,46 +206,6 @@ export default function OrderTracking() {
                 </button>
             </div>
 
-            {/* Filter buttons */}
-            <div className="flex flex-wrap gap-2">
-                <button
-                    onClick={() => setFilter('all')}
-                    className={`px-4 py-2 rounded-lg ${filter === 'all'
-                        ? 'bg-gray-800 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                >
-                    Tất cả
-                </button>
-                <button
-                    onClick={() => setFilter('pending')}
-                    className={`px-4 py-2 rounded-lg ${filter === 'pending'
-                        ? 'bg-yellow-500 text-white'
-                        : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                        }`}
-                >
-                    Chờ làm
-                </button>
-                <button
-                    onClick={() => setFilter('preparing')}
-                    className={`px-4 py-2 rounded-lg ${filter === 'preparing'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                        }`}
-                >
-                    Đang làm
-                </button>
-                <button
-                    onClick={() => setFilter('ready')}
-                    className={`px-4 py-2 rounded-lg ${filter === 'ready'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-green-100 text-green-800 hover:bg-green-200'
-                        }`}
-                >
-                    Đã xong
-                </button>
-            </div>
-
             {/* Hiển thị theo Đơn hàng */}
             {viewMode === 'orders' && (
                 <>
@@ -328,15 +288,6 @@ export default function OrderTracking() {
                                             })}
                                         </ul>
                                     </div>
-
-                                    <div className="border-t pt-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="font-semibold text-gray-700">Tổng cộng:</span>
-                                            <span className="text-lg font-bold text-blue-600">
-                                                {order.totalPrice?.toLocaleString('vi-VN')}đ
-                                            </span>
-                                        </div>
-                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -347,6 +298,45 @@ export default function OrderTracking() {
             {/* Hiển thị theo Món ăn */}
             {viewMode === 'items' && (
                 <>
+                    {/* Filter buttons */}
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => setFilter('all')}
+                            className={`px-4 py-2 rounded-lg ${filter === 'all'
+                                ? 'bg-gray-800 text-white'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                        >
+                            Tất cả
+                        </button>
+                        <button
+                            onClick={() => setFilter('pending')}
+                            className={`px-4 py-2 rounded-lg ${filter === 'pending'
+                                ? 'bg-yellow-500 text-white'
+                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                }`}
+                        >
+                            Chờ làm
+                        </button>
+                        <button
+                            onClick={() => setFilter('preparing')}
+                            className={`px-4 py-2 rounded-lg ${filter === 'preparing'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                }`}
+                        >
+                            Đang làm
+                        </button>
+                        <button
+                            onClick={() => setFilter('ready')}
+                            className={`px-4 py-2 rounded-lg ${filter === 'ready'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                }`}
+                        >
+                            Đã xong
+                        </button>
+                    </div>
                     {filteredItems.length === 0 ? (
                         <div className="text-center py-12 bg-gray-50 rounded-lg">
                             <p className="text-gray-500 text-lg">Không có món ăn nào</p>
@@ -419,8 +409,8 @@ export default function OrderTracking() {
                                                         : 'bg-gray-500 hover:bg-gray-600'
                                                     }`}
                                             >
-                                                {item.status === 'pending' && '▶ Bắt đầu làm'}
-                                                {item.status === 'preparing' && '✓ Đánh dấu xong'}
+                                                {item.status === 'pending' && '▶ Bắt đầu'}
+                                                {item.status === 'preparing' && '✓ Xong món'}
                                                 {item.status === 'ready' && '✓ Đã phục vụ'}
                                             </button>
                                         )}

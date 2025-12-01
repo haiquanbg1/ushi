@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Clock, CheckCircle, XCircle, History as HistoryIcon } from 'lucide-react';
-import { orderAPI, orderDetailAPI } from '@/lib/api';
+import { orderAPI, orderDetailAPI, customerAPI } from '@/lib/api';
 
 const tone = { card: 'bg-white/90 backdrop-blur-sm ring-1 ring-orange-100 shadow-sm' };
 
@@ -17,18 +17,12 @@ export default function HistoryPanel({ onOpenDetail, auth, customerId }) {
     useEffect(() => {
         let mounted = true;
         const load = async () => {
-            if (!customerId) {
-                if (mounted) {
-                    setOrders([]);
-                    setError(null);
-                    setLoading(false);
-                }
-                return;
-            }
+            customerId = auth.user?.customerId || customerId;
             try {
                 setLoading(true);
                 setError(null);
                 const res = await orderAPI.getByCustomer(customerId);
+                console.log(customerId, res.data.data)
                 const list = (res?.data?.data || []).map((o) => ({
                     ...o,
                     at: o.createdAt || o.created_at || o.at,

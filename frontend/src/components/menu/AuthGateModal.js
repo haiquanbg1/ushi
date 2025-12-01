@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { customerAPI } from '@/lib/api';
 
 const tone = {
     card: 'bg-white/90 backdrop-blur-sm ring-1 ring-orange-100 shadow-sm',
@@ -8,7 +9,7 @@ const tone = {
     ghost: 'bg-white ring-1 ring-orange-200 text-orange-700 hover:bg-orange-50 transition-all duration-200',
 };
 
-export default function AuthGateModal({ open, onClose }) {
+export default function AuthGateModal({ open, onClose, setCustomerId }) {
     const auth = useAuth();
     const [tab, setTab] = useState('login');
 
@@ -54,8 +55,17 @@ export default function AuthGateModal({ open, onClose }) {
                 password: loginForm.password,
             });
 
-            if (!r?.success) setErr(r?.error || 'Đăng nhập thất bại');
-            else onClose();
+            if (!r?.success) {
+                setErr(r?.error || 'Đăng nhập thất bại');
+            } else {
+                const c = await customerAPI.getByUser(r.id);
+                if (c?.data?.data?.id) {
+                    r.user.customerId = c.data.data.id;
+                    setCustomerId(c.data.data.id);
+                }
+                // giả sử r.user là user đã login, nếu hook của bạn trả kiểu khác thì chỉnh lại
+                onClose?.('login', r.user);
+            }
             return;
         }
 

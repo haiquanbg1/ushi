@@ -43,17 +43,17 @@ const TableManagement = () => {
     const handleTableClick = async (table) => {
         if (table.status === 'available') {
             // Tạo QR code cho bàn trống
-            await generateQRCode(table.tableNumber);
+            await generateQRCode(table.id);
         } else if (table.status === 'occupied') {
             // Hiển thị chi tiết đơn hàng cho bàn có khách
             await fetchTableDetails(table);
         }
     };
 
-    const generateQRCode = async (tableNumber) => {
+    const generateQRCode = async (tableId) => {
         try {
             const baseUrl = window.location.origin;
-            const menuUrl = `${baseUrl}/menu?table=${tableNumber}`;
+            const menuUrl = `${baseUrl}/menu?table=${tableId}`;
             const qrDataUrl = await QRCode.toDataURL(menuUrl, {
                 width: 300,
                 margin: 2,
@@ -133,7 +133,10 @@ const TableManagement = () => {
             // Show payment confirmation modal directly
             setPendingPayment({
                 ...pendingPayment,
-                order: activeOrder
+                order: {
+                    ...activeOrder,
+                    items: orderItems, // mang cả list items + combos vào order
+                },
             });
             setPaymentData({
                 paidAmount: pendingPayment.amount || activeOrder.totalAmount,
@@ -495,12 +498,60 @@ const TableManagement = () => {
                             <div>
                                 <p className="text-sm text-gray-600">Đơn hàng #{pendingPayment.orderId}</p>
                                 {pendingPayment.order?.table && (
-                                    <p className="text-sm text-gray-600">Bàn: {pendingPayment.order.table.tableNumber}</p>
+                                    <p className="text-sm text-gray-600">
+                                        Bàn: {pendingPayment.order.table.tableNumber}
+                                    </p>
                                 )}
                                 <p className="text-2xl font-bold text-gray-800">
                                     {parseFloat(pendingPayment.amount).toLocaleString('vi-VN')}đ
                                 </p>
                             </div>
+
+                            {/* Danh sách món + combo */}
+                            {pendingPayment.order?.items?.length > 0 && (
+                                <div className="border-t pt-3 mt-2 space-y-2">
+                                    <h4 className="text-sm font-semibold mb-1">
+                                        Chi tiết món đã gọi
+                                    </h4>
+
+                                    {pendingPayment.order.items.map((oi, index) => {
+                                        // Tùy theo record là món lẻ hay combo
+                                        const target = oi.item || oi.combo;
+                                        if (!target) return null;
+
+                                        const isCombo = !!oi.combo;
+                                        const name = target.name;
+                                        const quantity = oi.quantity || 1;
+                                        const lineTotal = (oi.unitPrice || 0) * quantity;
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="flex justify-between items-center text-sm border-b pb-2 last:border-b-0"
+                                            >
+                                                <div className="flex-1">
+                                                    <p className="font-medium">
+                                                        {name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {isCombo ? 'Combo' : 'Món lẻ'} • SL: {quantity}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-semibold">
+                                                        {lineTotal.toLocaleString('vi-VN')}đ
+                                                    </p>
+                                                    {oi.unitPrice && (
+                                                        <p className="text-[11px] text-gray-400">
+                                                            ({oi.unitPrice.toLocaleString('vi-VN')}đ / {isCombo ? 'combo' : 'phần'})
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">

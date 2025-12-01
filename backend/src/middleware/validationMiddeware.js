@@ -134,11 +134,12 @@ const validateUserCreate = async (req, res, next) => {
  * Validation middleware for user update
  */
 const validateUserUpdate = async (req, res, next) => {
-    const { phone, password, roleId } = req.body;
+    const { phone, password, email } = req.body;
     const userId = req.params.id;
+    console.log(phone, password, email);
 
     // Phone validation (nếu có truyền)
-    if (phone) {
+    if (phone && phone.trim() !== "") {
         if (!validators.isValidPhoneNumber(phone)) {
             return errorResponse(res, StatusCodes.BAD_REQUEST, "Số điện thoại không đúng định dạng.");
         }
@@ -154,7 +155,7 @@ const validateUserUpdate = async (req, res, next) => {
     }
 
     // Password validation (nếu có truyền)
-    if (password) {
+    if (password && password.trim() !== "") {
         if (!validators.isStrongPassword(password)) {
             return errorResponse(
                 res,
@@ -164,10 +165,9 @@ const validateUserUpdate = async (req, res, next) => {
         }
     }
 
-    // Role validation (nếu có truyền)
-    if (roleId !== undefined) {
-        if (!Number.isInteger(roleId) || roleId <= 0) {
-            return errorResponse(res, StatusCodes.BAD_REQUEST, "ID vai trò không hợp lệ.");
+    if (email && email.trim() !== "") {
+        if (!validators.isEmail(email)) {
+            return errorResponse(res, StatusCodes.BAD_REQUEST, "Địa chỉ email không đúng định dạng.");
         }
     }
 

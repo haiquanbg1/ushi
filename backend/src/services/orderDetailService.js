@@ -135,7 +135,6 @@ class OrderDetailService {
             return await OrderDetail.findAll({
                 where: { orderId },
                 include: [
-                    { model: Order, as: 'order' },
                     { model: Item, as: 'item' },
                     { model: Combo, as: 'combo' }
                 ]

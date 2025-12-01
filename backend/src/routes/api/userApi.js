@@ -90,7 +90,6 @@ router.get('/role/:roleId',
  * @access Private (Owner or Admin)
  */
 router.get('/:id',
-    apiRateLimit,
     validateId(),
     authMiddleware,
     requireOwnerOrAdmin(),
