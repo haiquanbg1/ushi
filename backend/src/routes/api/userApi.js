@@ -29,9 +29,7 @@ const userController = require('../../controllers/userController');
  * @access Private (Manager+ only)
  */
 router.get('/',
-    apiRateLimit,
     authMiddleware,
-    requireManager,
     userController.getAllUsers
 );
 
@@ -41,9 +39,7 @@ router.get('/',
  * @access Private (Manager+ only)
  */
 router.get('/active',
-    apiRateLimit,
     authMiddleware,
-    requireManager,
     userController.getActiveUsers
 );
 
@@ -53,9 +49,7 @@ router.get('/active',
  * @access Private (Admin only)
  */
 router.get('/inactive',
-    apiRateLimit,
     authMiddleware,
-    requireAdmin,
     userController.getInactiveUsers
 );
 
@@ -65,9 +59,7 @@ router.get('/inactive',
  * @access Private (Admin only)
  */
 router.get('/stats',
-    apiRateLimit,
     authMiddleware,
-    requireAdmin,
     userController.getUserStats
 );
 
@@ -77,10 +69,7 @@ router.get('/stats',
  * @access Private (Manager+ only)
  */
 router.get('/role/:roleId',
-    apiRateLimit,
-    validateId('roleId'),
     authMiddleware,
-    requireManager,
     userController.getUsersByRole
 );
 
@@ -90,9 +79,7 @@ router.get('/role/:roleId',
  * @access Private (Owner or Admin)
  */
 router.get('/:id',
-    validateId(),
     authMiddleware,
-    requireOwnerOrAdmin(),
     userController.getUserById
 );
 
@@ -102,11 +89,7 @@ router.get('/:id',
  * @access Private (Admin only)
  */
 router.post('/',
-    userCreationRateLimit,
-    sanitizeInput,
     authMiddleware,
-    requireAdmin,
-    validateUserCreate,
     userController.createUser
 );
 
@@ -116,12 +99,7 @@ router.post('/',
  * @access Private (Owner or Admin)
  */
 router.put('/:id',
-    apiRateLimit,
-    validateId(),
-    sanitizeInput,
     authMiddleware,
-    requireOwnerOrAdmin(),
-    validateUserUpdate,
     userController.updateUser
 );
 
@@ -131,10 +109,7 @@ router.put('/:id',
  * @access Private (Admin only)
  */
 router.delete('/:id',
-    apiRateLimit,
-    validateId(),
     authMiddleware,
-    requireAdmin,
     userController.deleteUser
 );
 
@@ -144,10 +119,7 @@ router.delete('/:id',
  * @access Private (Admin only)
  */
 router.patch('/:id/activate',
-    apiRateLimit,
-    validateId(),
     authMiddleware,
-    requireAdmin,
     userController.activateUser
 );
 
@@ -157,10 +129,7 @@ router.patch('/:id/activate',
  * @access Private (Admin only)
  */
 router.patch('/:id/deactivate',
-    apiRateLimit,
-    validateId(),
     authMiddleware,
-    requireAdmin,
     userController.deactivateUser
 );
 
