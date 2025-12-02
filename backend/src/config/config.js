@@ -25,6 +25,7 @@ module.exports = {
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
-    dialect: "postgres"
+    dialect: "postgres",
+    ssl: { rejectUnauthorized: false }
   }
 };
