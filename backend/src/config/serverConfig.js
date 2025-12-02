@@ -11,6 +11,7 @@ const { corsOptions } = require("../config/corsOptions");
 const http = require("http");
 
 module.exports = (app) => {
+    // Session
     app.use(
         session({
             secret: process.env.SECRET_KEY,
@@ -19,7 +20,7 @@ module.exports = (app) => {
         })
     );
 
-    // middleware
+    // Logging & parsers
     app.use(logger("dev"));
     app.use(express.json({ limit: "100mb" }));
     app.use(express.urlencoded({ extended: true, limit: "100mb" }));
@@ -27,8 +28,12 @@ module.exports = (app) => {
     app.use(express.static(path.join(__dirname, "public")));
     app.use(bodyParser.json());
 
-    // routes
-    app.use("/api/v1", cors(corsOptions), apiRouter);
+    // ⭐ CORS GLOBAL – áp dụng cho mọi route, cả preflight
+    app.use(cors(corsOptions));
+    app.options("*", cors(corsOptions));
+
+    // Routes
+    app.use("/api/v1", apiRouter);
 
     // catch 404 and forward to error handler
     app.use(function (req, res, next) {
@@ -37,18 +42,15 @@ module.exports = (app) => {
 
     // error handler
     app.use(function (err, req, res, next) {
-        // set locals, only providing error in development
         res.locals.message = err.message;
         res.locals.error = req.app.get("env") === "development" ? err : {};
 
-        // render the error page
         res.status(err.status || 500);
         res.send(err);
     });
 
     const server = http.createServer(app);
 
-    // Bắt đầu lắng nghe trên một cổng cụ thể, ví dụ: cổng 8080
     const port = process.env.PORT || 8080;
     server.listen(port, () => {
         console.log(`Server is listening on port ${port}`);
