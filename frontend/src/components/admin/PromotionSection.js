@@ -327,7 +327,7 @@ function PromotionsSection() {
                 ))}
                 {promotions.length === 0 && (
                     <div className="text-center py-8 text-slate-400 text-sm">
-                        Chưa có khuyến mãi nào. Nhấn "Thêm khuyến mãi" để bắt đầu.
+                        Chưa có khuyến mãi nào. Nhấn &quot;Thêm khuyến mãi&quot; để bắt đầu.
                     </div>
                 )}
             </div>
@@ -413,7 +413,7 @@ function PromotionsSection() {
                         {promotions.length === 0 && (
                             <tr>
                                 <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
-                                    Chưa có khuyến mãi nào. Nhấn "Thêm khuyến mãi" để bắt đầu.
+                                    Chưa có khuyến mãi nào. Nhấn &quot;Thêm khuyến mãi&quot; để bắt đầu.
                                 </td>
                             </tr>
                         )}

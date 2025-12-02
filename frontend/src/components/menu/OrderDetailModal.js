@@ -32,7 +32,6 @@ function StatusPill({ s }) {
 }
 
 export default function OrderDetailModal({ order, open, onClose }) {
-    if (!open || !order) return null;
 
     const details = Array.isArray(order._details) ? order._details : [];
     const when = order.at ? new Date(order.at) : null;
@@ -70,6 +69,8 @@ export default function OrderDetailModal({ order, open, onClose }) {
             };
         });
     }, [details]);
+
+    if (!open || !order) return null;
 
     const sumFromLines = lineItems.reduce((s, it) => s + it.total, 0);
     const grandTotal = Number(order.totalAmount ?? order.total ?? sumFromLines);

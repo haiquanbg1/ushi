@@ -5,7 +5,6 @@ import { orderAPI, orderDetailAPI, customerAPI } from '@/lib/api';
 const tone = { card: 'bg-white/90 backdrop-blur-sm ring-1 ring-orange-100 shadow-sm' };
 
 export default function HistoryPanel({ onOpenDetail, auth, customerId }) {
-    if (!auth.user) return null;
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -40,6 +39,8 @@ export default function HistoryPanel({ onOpenDetail, auth, customerId }) {
         load();
         return () => { mounted = false; };
     }, [customerId]);
+
+    if (!auth.user) return null;
 
     const fmtDate = (value) => {
         if (!value) return '-';

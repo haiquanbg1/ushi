@@ -4,7 +4,6 @@ import { userAPI, customerAPI } from '@/lib/api';
 const tone = { card: 'bg-white/90 backdrop-blur-sm ring-1 ring-orange-100 shadow-sm', primary: 'bg-orange-600 hover:bg-orange-700 text-white transition-all duration-200' };
 
 export default function UserPanel({ auth, addToast }) {
-    if (!auth.user) return null;
 
     const [customer, setCustomer] = useState(null);
     const [form, setForm] = useState({
@@ -12,6 +11,8 @@ export default function UserPanel({ auth, addToast }) {
         phone: auth.user.phone || '',
         email: auth.user.email || '',
     });
+
+    if (!auth.user) return null;
 
     // useEffect(() => {
     //     let mounted = true;
