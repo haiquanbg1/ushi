@@ -2,13 +2,13 @@
 const nextConfig = {
     reactStrictMode: true,
     images: {
-        domains: ['localhost', 'api.placeholder.com'],
+        domains: ['localhost', 'placehold.co'],
     },
     async rewrites() {
         return [
             {
                 source: '/api/placeholder/:path*',
-                destination: 'https://via.placeholder.com/:path*',
+                destination: 'https://placehold.co/:path*',
             },
         ];
     },

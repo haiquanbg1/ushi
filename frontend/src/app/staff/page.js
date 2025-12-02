@@ -24,7 +24,7 @@ export default function StaffPage() {
                                 <span className="text-sm">
                                     Xin chào,{' '}
                                     <span className="font-semibold">
-                                        {user.name || user.email}
+                                        {user.username || user.email}
                                     </span>
                                 </span>
                             )}

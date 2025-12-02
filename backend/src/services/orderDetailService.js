@@ -1,4 +1,4 @@
-const { OrderDetail, Order, Item, Combo } = require('../models');
+const { OrderDetail, Order, Item, Combo, ComboItem } = require('../models');
 const { Op } = require('sequelize');
 
 class OrderDetailService {
@@ -136,10 +136,21 @@ class OrderDetailService {
                 where: { orderId },
                 include: [
                     { model: Item, as: 'item' },
-                    { model: Combo, as: 'combo' }
+                    {
+                        model: Combo, as: 'combo',
+                        include: [{
+                            model: ComboItem,
+                            as: 'comboItems',
+                            include: [{
+                                model: Item,
+                                as: 'item'
+                            }]
+                        }]
+                    }
                 ]
             });
         } catch (error) {
+            console.log(error)
             throw new Error(`Error fetching order details by order ID: ${error.message}`);
         }
     }

@@ -38,19 +38,26 @@ export default function OrderDetailModal({ order, open, onClose }) {
     const when = order.at ? new Date(order.at) : null;
 
     const lineItems = useMemo(() => {
+        if (!details || !Array.isArray(details)) return [];
         return details.map((d) => {
             const isCombo = !!d.comboId || !!d.combo;
             const name =
                 (isCombo ? d?.combo?.name : d?.item?.name) ||
                 (isCombo ? `Combo #${d.comboId}` : `Món #${d.itemId}`);
             const qty = Number(d.quantity ?? 1);
-            // ưu tiên unitPrice; fallback sang totalPrice/qty
             const unit = Number(
-                d.unitPrice ?? (d.totalPrice && qty ? Number(d.totalPrice) / qty : 0)
+                d.unitPrice ??
+                (d.totalPrice && qty
+                    ? Number(d.totalPrice) / qty
+                    : 0),
             );
             const total = unit * qty;
+
             return {
-                id: d.id ?? `${isCombo ? 'c' : 'i'}-${d.itemId || d.comboId}-${Math.random()}`,
+                id:
+                    d.id ??
+                    `${isCombo ? 'c' : 'i'}-${d.itemId || d.comboId}-${Math.random() * 1e6
+                    }`,
                 isCombo,
                 name,
                 qty,
@@ -58,6 +65,8 @@ export default function OrderDetailModal({ order, open, onClose }) {
                 total,
                 note: d.specialInstructions,
                 status: d.status,
+                components:
+                    d.comboItems || d.items || d.combo?.items || [],
             };
         });
     }, [details]);
@@ -104,8 +113,8 @@ export default function OrderDetailModal({ order, open, onClose }) {
                                             <div className="flex items-center gap-2">
                                                 <span
                                                     className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] ring-1 ${it.isCombo
-                                                            ? 'bg-sky-50 text-sky-700 ring-sky-200'
-                                                            : 'bg-amber-50 text-amber-700 ring-amber-200'
+                                                        ? 'bg-sky-50 text-sky-700 ring-sky-200'
+                                                        : 'bg-amber-50 text-amber-700 ring-amber-200'
                                                         }`}
                                                 >
                                                     {it.isCombo ? <Package size={14} /> : <UtensilsCrossed size={14} />}
@@ -113,6 +122,22 @@ export default function OrderDetailModal({ order, open, onClose }) {
                                                 </span>
                                                 <span className="font-medium truncate">{it.name}</span>
                                             </div>
+
+                                            {it.isCombo && it.components.length > 0 && (
+                                                <details className="mt-1 text-xs text-gray-600">
+                                                    <summary className="cursor-pointer select-none">
+                                                        Thành phần combo ({it.components.length})
+                                                    </summary>
+                                                    <ul className="mt-1 pl-3 border-l border-orange-100/70 max-h-28 overflow-y-auto">
+                                                        {it.components.map((c) => (
+                                                            <li key={c.id || c.itemId}>
+                                                                • {c.item?.name || c.name}{' '}
+                                                                {c.quantity ? `x${c.quantity}` : ''}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </details>
+                                            )}
 
                                             <div className="mt-1 text-xs sm:text-sm text-gray-600 flex flex-wrap items-center gap-2">
                                                 <span>Số lượng: <b>{it.qty}</b></span>

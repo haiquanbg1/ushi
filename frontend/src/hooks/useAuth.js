@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
             const { user } = response.data.data;
 
             setUser(user);
-            return { success: true, id: user.id };
+            return { success: true, id: user.id, role: user.role.roleName };
         } catch (error) {
             return {
                 success: false,

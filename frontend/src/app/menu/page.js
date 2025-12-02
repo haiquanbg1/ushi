@@ -16,6 +16,7 @@ import CartDrawer from '@/components/menu/CartDrawer';
 import HistoryPanel from '@/components/menu/HistoryPanel';
 import UserPanel from '@/components/menu/UserPanel';
 import ItemModal from '@/components/menu/ItemModal';
+import ComboModal from '@/components/menu/ComboModal';
 import OrderDetailModal from '@/components/menu/OrderDetailModal';
 import AuthGateModal from '@/components/menu/AuthGateModal';
 import EmptyState from '@/components/menu/EmptyState';
@@ -23,7 +24,7 @@ import ToastHost from '@/components/menu/ToastHost';
 import BottomBar from '@/components/menu/BottomBar';
 import OrderReview from '@/components/menu/OrderReview';
 import { useAuth } from '@/hooks/useAuth';
-import { itemAPI, categoryAPI, orderAPI, orderDetailAPI, customerAPI } from '@/lib/api';
+import { itemAPI, categoryAPI, orderAPI, orderDetailAPI, customerAPI, comboAPI } from '@/lib/api';
 
 // =================== Cart Store ===================
 const useCartStore = create(
@@ -121,7 +122,7 @@ const fillCartFromServer = async (cid, cartStore, isGuest = false) => {
                 price: Number(it.unitPrice ?? it.price ?? 0),
                 quantity: Number(it.quantity ?? 1),
                 category: it.item?.categoryId || it.item?.category?.id,
-                image: it.item?.imageUrl || '/api/placeholder/400/300',
+                image: it.item?.imageUrl || null,
                 desc: it.item?.description || '',
             }))
             .filter((x) => x.id);
@@ -224,6 +225,7 @@ export default function Page() {
     const [query, setQuery] = useState('');
     const [category, setCategory] = useState('all');
     const [selectedItem, setSelectedItem] = useState(null);
+    const [selectedCombo, setSelectedCombo] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [toasts, setToasts] = useState([]);
     const [showAuthModal, setShowAuthModal] = useState(false);
@@ -458,51 +460,75 @@ export default function Page() {
                 setLoading(true);
                 setError(null);
 
-                const categoriesResponse = await categoryAPI.getActive();
-                const categoriesData = categoriesResponse?.data?.data || [];
+                const [categoriesResponse, itemsResponse, combosResponse] =
+                    await Promise.all([
+                        categoryAPI.getActive(),
+                        itemAPI.getAll(),
+                        comboAPI.getAll(),
+                    ]);
 
-                const mapped = [
+                const categoriesData = categoriesResponse?.data?.data || [];
+                const itemsData = itemsResponse?.data?.data || [];
+                const combosData = combosResponse?.data?.data || [];
+
+                // categories
+                const mappedCategories = [
                     { id: 'all', name: 'Tất cả', sortOrder: 0, isActive: true },
+                    { id: '1000', name: 'Combo', sortOrder: 1000, isActive: true },
                     ...categoriesData.map((cat) => ({
                         id: cat.id,
                         name: cat.categoryName,
                         sortOrder: cat.sortOrder ?? 0,
                         isActive: cat.isActive,
                     })),
-                ];
-
-                mapped.sort(
-                    (a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)
+                ].sort(
+                    (a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0),
                 );
-                setCategories(mapped);
+                setCategories(mappedCategories);
 
-                const itemsResponse = await itemAPI.getAll();
-                const itemsData = itemsResponse?.data?.data || [];
-
+                // items thường
                 const transformedItems = itemsData.map((item) => ({
                     id: item.id,
+                    type: 'item',
                     name: item.name,
                     price: item.price,
                     category: item.categoryId || item.category?.id,
-                    image: item.imageUrl || '/api/placeholder/400/300',
+                    image:
+                        item.imageUrl ||
+                        item.image || // ⬅️ fallback nếu backend trả về image
+                        null,
                     desc: item.description || '',
-                    isAvailable: item.isAvailable !== false,
+                    isAvailable: item.isActive !== false,
                     sortOrder: item.sortOrder ?? 0,
                 }));
 
-                setMenuItems(transformedItems);
+                // combos
+                const transformedCombos = combosData.map((combo) => ({
+                    id: combo.id,
+                    type: 'combo',
+                    name: combo.name,
+                    price: combo.price,
+                    category: { id: '1000', name: 'Combo', sortOrder: 1000, isActive: true },
+                    image:
+                        combo.image ||
+                        combo.imageUrl ||
+                        null,
+                    desc: combo.description || '',
+                    isAvailable: combo.isActive !== false,
+                    components:
+                        combo.comboItems ||
+                        [],
+                }));
+
+                const merged = [...transformedItems, ...transformedCombos].sort(
+                    (a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0),
+                );
+                setMenuItems(merged);
             } catch (err) {
                 console.error('Failed to fetch data:', err);
                 setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
-
                 setMenuItems([]);
-                setCategories([
-                    { id: 'all', name: 'Tất cả' },
-                    { id: 1, name: 'Món chính' },
-                    { id: 2, name: 'Món nhẹ' },
-                    { id: 3, name: 'Đồ uống' },
-                    { id: 4, name: 'Tráng miệng' },
-                ]);
+                setCategories([{ id: 'all', name: 'Tất cả' }]);
             } finally {
                 setLoading(false);
             }
@@ -513,26 +539,44 @@ export default function Page() {
 
     const filtered = useMemo(() => {
         return menuItems
-            .filter(
-                (m) =>
-                    (category === 'all' || m.category === category) &&
-                    m.name.toLowerCase().includes(query.toLowerCase()) &&
-                    m.isAvailable !== false
-            )
-            .sort(
-                (a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)
-            );
+            .filter((m) => {
+                // Filter theo query (tìm kiếm)
+                const matchesQuery = m.name.toLowerCase().includes(query.toLowerCase());
+
+                // Filter theo category
+                let matchesCategory = false;
+
+                if (category === 'all') {
+                    // Hiển thị tất cả
+                    matchesCategory = true;
+                } else if (category === '1000') {
+                    // Chỉ hiển thị combo
+                    matchesCategory = m.type === 'combo';
+                } else {
+                    // Hiển thị items thuộc category cụ thể (không bao gồm combo)
+                    matchesCategory = m.type === 'item' && m.category === category;
+                }
+
+                // Filter theo availability
+                const isAvailable = m.isAvailable !== false;
+
+                return matchesQuery && matchesCategory && isAvailable;
+            })
+            .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
     }, [query, category, menuItems]);
 
     // Handle Modal Overflow
     useEffect(() => {
         const modalOpen =
-            active === 'cart' || !!selectedItem || !!selectedOrder || showAuthModal;
+            active === 'cart' || !!selectedItem || !!selectedCombo || !!selectedOrder || showAuthModal;
         document.body.style.overflow = modalOpen ? 'hidden' : '';
     }, [active, selectedItem, selectedOrder, showAuthModal]);
 
     const handleAddToCart = (item) => {
-        cart.add(item);
+        cart.add({
+            ...item,
+            components: item.components || item.items || item.comboItems || [],
+        });
         pushToast({ message: `Đã thêm ${item.name} vào giỏ hàng` });
     };
 
@@ -657,7 +701,7 @@ export default function Page() {
                                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                                             {filtered.map((m, idx) => (
                                                 <div
-                                                    key={m.id}
+                                                    key={`${m.type}-${m.id}`}
                                                     style={{
                                                         animationDelay: `${idx * 50}ms`,
                                                     }}
@@ -668,7 +712,11 @@ export default function Page() {
                                                         onAdd={() =>
                                                             handleAddToCart(m)
                                                         }
-                                                        onOpen={setSelectedItem}
+                                                        onOpen={() =>
+                                                            m.type === 'combo'
+                                                                ? setSelectedCombo(m)
+                                                                : setSelectedItem(m)
+                                                        }
                                                     />
                                                 </div>
                                             ))}
@@ -740,6 +788,12 @@ export default function Page() {
                 item={selectedItem}
                 open={!!selectedItem}
                 onClose={() => setSelectedItem(null)}
+                onAdd={handleAddToCart}
+            />
+            <ComboModal
+                combo={selectedCombo}
+                open={!!selectedCombo}
+                onClose={() => setSelectedCombo(null)}
                 onAdd={handleAddToCart}
             />
             <OrderDetailModal

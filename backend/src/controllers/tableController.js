@@ -1,12 +1,27 @@
 const TableService = require('../services/tableService');
+const RoleService = require("../services/roleService");
 
 exports.list = async (req, res) => {
-    try { res.json({ ok: true, data: await TableService.getAllTables() }); }
+    const user = req.user;
+
+    try {
+        const role = await RoleService.getRoleById(user.roleId);
+
+        let response = {};
+        if (role.roleName == "Admin") {
+            response = await TableService.getAllTables();
+        } else {
+            response = await TableService.getAllTablesActive();
+        }
+        res.json({ ok: true, data: response });
+    }
     catch (e) { res.status(500).json({ ok: false, message: e.message }); }
 };
 
 exports.get = async (req, res) => {
-    try { res.json({ ok: true, data: await TableService.getTableById(req.params.id) }); }
+    try {
+        res.json({ ok: true, data: await TableService.getTableById(req.params.id) });
+    }
     catch (e) { res.status(404).json({ ok: false, message: e.message }); }
 };
 

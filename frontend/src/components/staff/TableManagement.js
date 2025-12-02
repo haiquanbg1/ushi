@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { staffAPI } from '@/lib/api'; // Import staffAPI
+import { staffAPI } from '@/lib/api';
 
 const TableManagement = () => {
     const [tables, setTables] = useState([]);
@@ -19,10 +19,11 @@ const TableManagement = () => {
         changeAmount: 0,
         paymentMethod: 'cash'
     });
+    const [paymentError, setPaymentError] = useState(''); // ✅ Thêm state cho validation error
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false); // ✅ Loading state
 
     useEffect(() => {
         fetchTables();
-        // Auto refresh mỗi 30 giây
         const interval = setInterval(fetchTables, 30000);
         return () => clearInterval(interval);
     }, []);
@@ -42,10 +43,8 @@ const TableManagement = () => {
 
     const handleTableClick = async (table) => {
         if (table.status === 'available') {
-            // Tạo QR code cho bàn trống
             await generateQRCode(table.id);
         } else if (table.status === 'occupied') {
-            // Hiển thị chi tiết đơn hàng cho bàn có khách
             await fetchTableDetails(table);
         }
     };
@@ -72,7 +71,6 @@ const TableManagement = () => {
 
     const fetchTableDetails = async (table) => {
         try {
-            // Find active order for this table
             const activeOrder = await staffAPI.getActiveOrderByTable(table.id);
 
             if (!activeOrder) {
@@ -82,16 +80,13 @@ const TableManagement = () => {
 
             const orderItems = await staffAPI.getOrderItems(activeOrder.id);
 
-            // Check if there's an invoice for this order
             let invoice = null;
             try {
                 invoice = await staffAPI.getInvoiceByOrderId(activeOrder.id);
             } catch (error) {
-                // Invoice doesn't exist yet, which is fine
                 console.log('No invoice found for order:', activeOrder.id);
             }
 
-            // If invoice exists, show order details (already paid)
             if (invoice) {
                 setSelectedTable({
                     ...table,
@@ -107,11 +102,9 @@ const TableManagement = () => {
                 return;
             }
 
-            // Check for pending payments
             const payments = await staffAPI.getPaymentsByOrder(activeOrder.id);
             let pendingPayment = payments?.find(p => p.paymentStatus === 'pending');
 
-            // If no pending payment exists, create one automatically
             if (!pendingPayment) {
                 try {
                     const totalAmount = activeOrder.totalAmount || orderItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
@@ -121,7 +114,6 @@ const TableManagement = () => {
                         paymentMethod: 'cash',
                         paymentStatus: 'pending'
                     });
-                    // Handle different response structures
                     pendingPayment = newPaymentResponse?.data?.data || newPaymentResponse?.data || newPaymentResponse;
                 } catch (error) {
                     console.error('Error creating payment:', error);
@@ -130,12 +122,11 @@ const TableManagement = () => {
                 }
             }
 
-            // Show payment confirmation modal directly
             setPendingPayment({
                 ...pendingPayment,
                 order: {
                     ...activeOrder,
-                    items: orderItems, // mang cả list items + combos vào order
+                    items: orderItems,
                 },
             });
             setPaymentData({
@@ -143,6 +134,7 @@ const TableManagement = () => {
                 changeAmount: 0,
                 paymentMethod: pendingPayment.paymentMethod || 'cash'
             });
+            setPaymentError(''); // ✅ Reset error khi mở modal
             setShowPaymentModal(true);
         } catch (error) {
             console.error('Error fetching table details:', error);
@@ -153,8 +145,6 @@ const TableManagement = () => {
     const updateTableStatus = async (tableId, newStatus) => {
         try {
             await staffAPI.updateTableStatus(tableId, newStatus);
-
-            // Cập nhật state local
             setTables(tables.map(table =>
                 table.id === tableId ? { ...table, status: newStatus } : table
             ));
@@ -168,7 +158,6 @@ const TableManagement = () => {
         if (!selectedTable?.orderDetails || !selectedTable.orderId) return;
 
         try {
-            // First check if payment exists
             const payments = await staffAPI.getPaymentsByOrder(selectedTable.orderId);
 
             if (!payments || payments.length === 0 || payments.every(p => p.paymentStatus !== 'paid')) {
@@ -179,7 +168,6 @@ const TableManagement = () => {
             await staffAPI.createInvoice({ orderId: selectedTable.orderId });
             alert('Hóa đơn đã được xuất thành công!');
 
-            // Table status will be updated automatically by the invoice service
             setShowModal(false);
             fetchTables();
         } catch (error) {
@@ -188,18 +176,34 @@ const TableManagement = () => {
         }
     };
 
+    // ✅ Validate và xử lý thanh toán
     const handleConfirmPayment = async () => {
         if (!pendingPayment) return;
 
-        try {
-            const paidAmount = parseFloat(paymentData.paidAmount);
-            const amount = parseFloat(pendingPayment.amount);
-            const changeAmount = paidAmount - amount;
+        // ✅ Validate trước khi submit
+        if (!paymentData.paidAmount || paymentData.paidAmount.toString().trim() === '') {
+            setPaymentError('Vui lòng nhập số tiền nhận');
+            return;
+        }
 
-            if (paidAmount < amount) {
-                alert('Số tiền thanh toán không đủ!');
-                return;
-            }
+        const paidAmount = parseFloat(paymentData.paidAmount);
+        const amount = parseFloat(pendingPayment.amount);
+
+        if (isNaN(paidAmount) || paidAmount <= 0) {
+            setPaymentError('Số tiền nhận phải lớn hơn 0');
+            return;
+        }
+
+        if (paidAmount < amount) {
+            setPaymentError(`Số tiền nhận phải lớn hơn hoặc bằng ${amount.toLocaleString('vi-VN')}đ`);
+            return;
+        }
+
+        try {
+            setIsProcessingPayment(true);
+            setPaymentError(''); // Clear error
+
+            const changeAmount = paidAmount - amount;
 
             await staffAPI.confirmPayment(pendingPayment.id, {
                 paidAmount: paidAmount,
@@ -211,25 +215,23 @@ const TableManagement = () => {
             setShowPaymentModal(false);
             setPendingPayment(null);
             setPaymentData({ paidAmount: '', changeAmount: 0, paymentMethod: 'cash' });
-            fetchTables(); // Refresh tables to update status
+            setPaymentError('');
+            fetchTables();
         } catch (error) {
             console.error('Error confirming payment:', error);
-            alert('Có lỗi xảy ra khi xác nhận thanh toán');
+            setPaymentError('Có lỗi xảy ra khi xác nhận thanh toán');
+        } finally {
+            setIsProcessingPayment(false);
         }
     };
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'available':
-                return 'bg-green-100 border-green-300 hover:bg-green-200';
-            case 'occupied':
-                return 'bg-red-100 border-red-300 hover:bg-red-200';
-            case 'reserved':
-                return 'bg-yellow-100 border-yellow-300 hover:bg-yellow-200';
-            case 'cleaning':
-                return 'bg-blue-100 border-blue-300 hover:bg-blue-200';
-            default:
-                return 'bg-gray-100 border-gray-300';
+            case 'available': return 'bg-green-100 border-green-300 hover:bg-green-200';
+            case 'occupied': return 'bg-red-100 border-red-300 hover:bg-red-200';
+            case 'reserved': return 'bg-yellow-100 border-yellow-300 hover:bg-yellow-200';
+            case 'cleaning': return 'bg-blue-100 border-blue-300 hover:bg-blue-200';
+            default: return 'bg-gray-100 border-gray-300';
         }
     };
 
@@ -299,7 +301,6 @@ const TableManagement = () => {
                 </button>
             </div>
 
-            {/* Legend */}
             <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-green-200 border-2 border-green-300 rounded"></div>
@@ -311,7 +312,6 @@ const TableManagement = () => {
                 </div>
             </div>
 
-            {/* Tables Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {tables.map(table => (
                     <div
@@ -362,7 +362,6 @@ const TableManagement = () => {
                         </div>
 
                         <div className="px-6 py-4">
-                            {/* Invoice Header - Show if invoice exists */}
                             {selectedTable.invoice && (
                                 <div className="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
@@ -469,14 +468,14 @@ const TableManagement = () => {
                                 }}
                                 className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition"
                             >
-                                Tải xuống QR Code
+                                In QR
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Payment Confirmation Modal */}
+            {/* ✅ Payment Confirmation Modal với Validation */}
             {showPaymentModal && pendingPayment && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-md w-full p-6">
@@ -487,6 +486,7 @@ const TableManagement = () => {
                                     setShowPaymentModal(false);
                                     setPendingPayment(null);
                                     setPaymentData({ paidAmount: '', changeAmount: 0, paymentMethod: 'cash' });
+                                    setPaymentError('');
                                 }}
                                 className="text-gray-500 hover:text-gray-700 text-2xl"
                             >
@@ -507,7 +507,6 @@ const TableManagement = () => {
                                 </p>
                             </div>
 
-                            {/* Danh sách món + combo */}
                             {pendingPayment.order?.items?.length > 0 && (
                                 <div className="border-t pt-3 mt-2 space-y-2">
                                     <h4 className="text-sm font-semibold mb-1">
@@ -515,7 +514,6 @@ const TableManagement = () => {
                                     </h4>
 
                                     {pendingPayment.order.items.map((oi, index) => {
-                                        // Tùy theo record là món lẻ hay combo
                                         const target = oi.item || oi.combo;
                                         if (!target) return null;
 
@@ -530,9 +528,7 @@ const TableManagement = () => {
                                                 className="flex justify-between items-center text-sm border-b pb-2 last:border-b-0"
                                             >
                                                 <div className="flex-1">
-                                                    <p className="font-medium">
-                                                        {name}
-                                                    </p>
+                                                    <p className="font-medium">{name}</p>
                                                     <p className="text-xs text-gray-500">
                                                         {isCombo ? 'Combo' : 'Món lẻ'} • SL: {quantity}
                                                     </p>
@@ -553,28 +549,52 @@ const TableManagement = () => {
                                 </div>
                             )}
 
+                            {/* ✅ Input với validation */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Số tiền nhận (đ)
+                                    Số tiền nhận (đ) <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"
                                     value={paymentData.paidAmount}
                                     onChange={(e) => {
-                                        const paid = parseFloat(e.target.value) || 0;
+                                        const value = e.target.value;
+                                        const paid = parseFloat(value) || 0;
                                         const amount = parseFloat(pendingPayment.amount);
+
+                                        if (value) {
+                                            setPaymentError('');
+                                        }
+
                                         setPaymentData({
                                             ...paymentData,
-                                            paidAmount: e.target.value,
+                                            paidAmount: value,
                                             changeAmount: Math.max(0, paid - amount)
                                         });
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    onBlur={() => {
+                                        if (!paymentData.paidAmount || parseFloat(paymentData.paidAmount) <= 0) {
+                                            setPaymentError('Vui lòng nhập số tiền nhận');
+                                        }
+                                    }}
+                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${paymentError
+                                        ? 'border-red-500 focus:ring-red-500'
+                                        : 'border-gray-300 focus:ring-blue-500'
+                                        }`}
                                     placeholder="Nhập số tiền nhận"
+                                    min="0"
+                                    step="1000"
+                                    required
+                                    disabled={isProcessingPayment}
                                 />
+                                {paymentError && (
+                                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                                        <span>⚠️</span> {paymentError}
+                                    </p>
+                                )}
                             </div>
 
-                            {paymentData.changeAmount > 0 && (
+                            {paymentData.changeAmount > 0 && !paymentError && (
                                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                                     <p className="text-sm text-gray-600">Tiền thừa:</p>
                                     <p className="text-xl font-bold text-green-600">
@@ -591,6 +611,7 @@ const TableManagement = () => {
                                     value={paymentData.paymentMethod}
                                     onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    disabled={isProcessingPayment}
                                 >
                                     <option value="cash">Tiền mặt</option>
                                     <option value="card">Thẻ</option>
@@ -599,22 +620,42 @@ const TableManagement = () => {
                                 </select>
                             </div>
 
+                            {/* ✅ Buttons với disabled state */}
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => {
                                         setShowPaymentModal(false);
                                         setPendingPayment(null);
                                         setPaymentData({ paidAmount: '', changeAmount: 0, paymentMethod: 'cash' });
+                                        setPaymentError('');
                                     }}
-                                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
+                                    className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-colors"
+                                    disabled={isProcessingPayment}
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     onClick={handleConfirmPayment}
-                                    className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold"
+                                    disabled={
+                                        isProcessingPayment ||
+                                        !paymentData.paidAmount ||
+                                        parseFloat(paymentData.paidAmount) <= 0
+                                    }
+                                    className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${isProcessingPayment ||
+                                        !paymentData.paidAmount ||
+                                        parseFloat(paymentData.paidAmount) <= 0
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-green-500 hover:bg-green-600 text-white'
+                                        }`}
                                 >
-                                    Xác nhận
+                                    {isProcessingPayment ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                            Đang xử lý...
+                                        </span>
+                                    ) : (
+                                        'Xác nhận'
+                                    )}
                                 </button>
                             </div>
                         </div>

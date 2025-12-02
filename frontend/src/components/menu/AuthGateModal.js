@@ -58,13 +58,17 @@ export default function AuthGateModal({ open, onClose, setCustomerId }) {
             if (!r?.success) {
                 setErr(r?.error || 'Đăng nhập thất bại');
             } else {
-                const c = await customerAPI.getByUser(r.id);
-                if (c?.data?.data?.id) {
-                    r.user.customerId = c.data.data.id;
-                    setCustomerId(c.data.data.id);
+                if (r.role !== "Customer") {
+                    await auth.logout();
+                    setErr("Sai tài khoản hoặc mật khẩu.");
+                } else {
+                    const c = await customerAPI.getByUser(r.id);
+                    if (c?.data?.data?.id) {
+                        setCustomerId(c.data.data.id);
+                    }
+                    // giả sử r.user là user đã login, nếu hook của bạn trả kiểu khác thì chỉnh lại
+                    onClose?.('login', r.user);
                 }
-                // giả sử r.user là user đã login, nếu hook của bạn trả kiểu khác thì chỉnh lại
-                onClose?.('login', r.user);
             }
             return;
         }

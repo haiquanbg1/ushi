@@ -1,6 +1,23 @@
 const { Table, Order } = require('../models');
 
 class TableService {
+    async getAllTablesActive() {
+        try {
+            return await Table.findAll({
+                where: {
+                    isActive: true
+                },
+                include: [
+                    { model: Order, as: 'orders' },
+                ],
+                order: [['tableNumber', 'ASC']]
+            });
+        } catch (error) {
+            console.log(error)
+            throw new Error(`Error fetching tables: ${error.message}`);
+        }
+    }
+
     async getAllTables() {
         try {
             return await Table.findAll({

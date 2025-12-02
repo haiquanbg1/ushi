@@ -218,11 +218,7 @@ class CustomerPromotionService {
 
     // ===== Query Methods =====
     async getCustomerPromotions(customerId, options = {}) {
-        const where = { customerId };
-
-        if (options.status) {
-            where.status = options.status;
-        }
+        const where = { customerId, status: "available" };
 
         const promotionWhere = {};
         if (!options.includeExpired) {

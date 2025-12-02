@@ -19,6 +19,27 @@ class ComboService {
         }
     }
 
+    async getAllCombosActive() {
+        try {
+            return await Combo.findAll({
+                where: {
+                    isActive: true
+                },
+                include: [{
+                    model: ComboItem,
+                    as: 'comboItems',
+                    include: [{
+                        model: Item,
+                        as: 'item'
+                    }]
+                }],
+                order: [['createdAt', 'DESC']]
+            });
+        } catch (error) {
+            throw new Error(`Error fetching combos: ${error.message}`);
+        }
+    }
+
     async getComboById(id) {
         try {
             const combo = await Combo.findByPk(id, {

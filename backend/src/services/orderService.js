@@ -244,6 +244,7 @@ class OrderService {
                     OrderDetail.create({
                         orderId: orderId,
                         itemId: item.itemId,
+                        comboId: item.comboId,
                         quantity: item.quantity,
                         unitPrice: item.unitPrice,
                         status: 'pending'

@@ -91,6 +91,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                 setCurrentOrder(order);
                 const detailsRes = await orderDetailAPI.getByOrder(order.id);
                 const details = detailsRes?.data?.data || [];
+                console.log(details)
                 setOrderItems(details);
             } else {
                 setCurrentOrder(null);
@@ -141,10 +142,10 @@ export default function OrderReview({ customerId, tableId, onClose }) {
             const effectiveCustomerId = customerId || 1;
             const res = await customerPromotionAPI.getCustomerPromotions(
                 effectiveCustomerId,
-                { status: 'available' }
+                {}
             );
 
-            if (res.data?.success && res.data?.data) {
+            if (res.data?.data) {
                 setAvailablePromotions(res.data.data);
             } else {
                 setAvailablePromotions([]);
@@ -253,8 +254,9 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                     promotion.id,
                     subtotal
                 );
+                console.log(res.data.data)
 
-                if (res.data?.success && res.data?.data?.eligible) {
+                if (res.data?.data?.eligible) {
                     setAppliedCoupon(promotionData);
                     localStorage.setItem(
                         DISCOUNT_STORAGE_KEY,
@@ -310,6 +312,50 @@ export default function OrderReview({ customerId, tableId, onClose }) {
         }
 
         return Math.min(promotion.value, subtotal);
+    };
+
+    const handlePayment = async () => {
+        if (!currentOrder) return;
+
+        try {
+            const effectiveCustomerId = customerId || 1;
+
+            // Cập nhật order với discountAmount & totalAmount
+            await orderAPI.update(currentOrder.id, {
+                discountAmount: discount,
+                totalAmount: total,
+            });
+
+            // Nếu có mã giảm giá, đánh dấu là đã sử dụng (optional nhưng nên có)
+            if (appliedCoupon) {
+                const promotion = appliedCoupon.promotion || appliedCoupon;
+
+                if (promotion.id) {
+                    await customerPromotionAPI.applyPromotion(
+                        effectiveCustomerId,
+                        promotion.id,
+                        {
+                            orderId: currentOrder.id,
+                            orderAmount: subtotal,
+                        }
+                    );
+                }
+
+                // Xoá mã đã lưu ở localStorage sau khi dùng xong
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem(DISCOUNT_STORAGE_KEY);
+                }
+            }
+
+            // Sau khi update thành công, mở popup cảm ơn
+            setShowPaymentPopup(true);
+
+            // Nếu muốn sync lại UI từ server:
+            // await fetchCurrentOrder();
+        } catch (error) {
+            console.error('Error when updating order discount/total:', error);
+            // TODO: có thể show toast / error UI nếu bạn có hệ thống thông báo
+        }
     };
 
     const subtotal = calculateTotal();
@@ -386,43 +432,80 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                 </div>
 
                 <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
-                    {orderItems.map((item) => (
-                        <div
-                            key={item.id}
-                            className="flex items-start justify-between gap-3 border border-orange-100 rounded-xl p-3"
-                        >
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-semibold text-gray-800 text-sm">
-                                        {item.item?.name || 'Món không xác định'}
-                                    </span>
-                                    <span
-                                        className={`px-2 py-0.5 text-[10px] border rounded-full whitespace-nowrap ${getStatusColor(
-                                            item.status || 'pending'
-                                        )}`}
-                                    >
-                                        {getStatusText(item.status || 'pending')}
-                                    </span>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    {item.quantity}x{' '}
-                                    {parseFloat(item.unitPrice || 0).toLocaleString(
-                                        'vi-VN'
+                    {orderItems.map((item) => {
+                        // xác định combo hay món thường
+                        const isCombo = !!item.comboId || !!item.combo;
+                        const name = isCombo
+                            ? item.combo?.name || `Combo #${item.comboId}`
+                            : item.item?.name || 'Món không xác định';
+
+                        // list thành phần combo
+                        const components =
+                            item.comboItems ||
+                            item.items ||
+                            item.combo?.items ||
+                            [];
+
+                        const unitPrice = parseFloat(item.unitPrice || 0);
+                        const qty = parseInt(item.quantity || 0, 10);
+                        const lineTotal = unitPrice * qty;
+
+                        return (
+                            <div
+                                key={item.id}
+                                className="flex items-start justify-between gap-3 border border-orange-100 rounded-xl p-3"
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-semibold text-gray-800 text-sm">
+                                            {name}
+                                        </span>
+
+                                        {isCombo && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                                                Combo
+                                            </span>
+                                        )}
+
+                                        <span
+                                            className={`px-2 py-0.5 text-[10px] border rounded-full whitespace-nowrap ${getStatusColor(
+                                                item.status || 'pending'
+                                            )}`}
+                                        >
+                                            {getStatusText(item.status || 'pending')}
+                                        </span>
+                                    </div>
+
+                                    <div className="text-sm text-gray-600">
+                                        {qty}x {unitPrice.toLocaleString('vi-VN')}đ
+                                    </div>
+
+                                    {/* Dropdown thành phần combo */}
+                                    {isCombo && components.length > 0 && (
+                                        <details className="mt-1">
+                                            <summary className="text-xs text-sky-700 cursor-pointer select-none">
+                                                Thành phần combo ({components.length})
+                                            </summary>
+                                            <ul className="mt-1 pl-3 text-xs text-gray-600 max-h-24 overflow-y-auto border-l border-orange-100/70">
+                                                {components.map((c, idx) => (
+                                                    <li key={c.id || c.itemId || idx}>
+                                                        • {c.item?.name || c.name}{' '}
+                                                        {c.quantity ? `x${c.quantity}` : ''}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </details>
                                     )}
-                                    đ
+                                </div>
+
+                                <div className="text-right">
+                                    <div className="font-semibold text-gray-800">
+                                        {lineTotal.toLocaleString('vi-VN')}đ
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <div className="font-semibold text-gray-800">
-                                    {(
-                                        parseFloat(item.unitPrice || 0) *
-                                        parseInt(item.quantity || 0, 10)
-                                    ).toLocaleString('vi-VN')}
-                                    đ
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Mã giảm giá + tổng tiền + nút thanh toán */}
@@ -433,8 +516,8 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                             <button
                                 onClick={() => setShowCoupons(!showCoupons)}
                                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-dashed ${showCoupons
-                                        ? 'border-orange-400 bg-orange-50'
-                                        : 'border-orange-200 bg-white'
+                                    ? 'border-orange-400 bg-orange-50'
+                                    : 'border-orange-200 bg-white'
                                     } hover:border-orange-400 hover:bg-orange-50 transition-all`}
                             >
                                 <div className="flex items-center gap-2">
@@ -516,8 +599,8 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                                                 }
                                                 disabled={!isEligible}
                                                 className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all ${isEligible
-                                                        ? 'border-orange-200 bg-white hover:border-orange-400 hover:bg-orange-50'
-                                                        : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                                                    ? 'border-orange-200 bg-white hover:border-orange-400 hover:bg-orange-50'
+                                                    : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
                                                     }`}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
@@ -525,16 +608,16 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                                                         <div className="flex items-center gap-2 mb-1">
                                                             <span
                                                                 className={`font-semibold ${isEligible
-                                                                        ? 'text-orange-600'
-                                                                        : 'text-gray-500'
+                                                                    ? 'text-orange-600'
+                                                                    : 'text-gray-500'
                                                                     }`}
                                                             >
                                                                 {promotion.name}
                                                             </span>
                                                             <span
                                                                 className={`text-xs px-2 py-0.5 rounded ${isEligible
-                                                                        ? 'bg-orange-100 text-orange-700'
-                                                                        : 'bg-gray-100 text-gray-600'
+                                                                    ? 'bg-orange-100 text-orange-700'
+                                                                    : 'bg-gray-100 text-gray-600'
                                                                     }`}
                                                             >
                                                                 {getPromotionLabel(
@@ -609,7 +692,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                             </span>
                         </div>
                         <button
-                            onClick={() => setShowPaymentPopup(true)}
+                            onClick={handlePayment}
                             className={`${tone.primary} w-full py-3 rounded-xl font-semibold text-base shadow-md hover:shadow-lg active:scale-[0.98] transition-all`}
                         >
                             Thanh toán
