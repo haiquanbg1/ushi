@@ -26,6 +26,11 @@ module.exports = {
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
     dialect: "postgres",
-    ssl: { rejectUnauthorized: false }
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
   }
 };
