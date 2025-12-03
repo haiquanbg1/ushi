@@ -29,6 +29,7 @@ import {
     orderDetailAPI,
     customerAPI,
     comboAPI,
+    tableAPI
 } from '@/lib/api';
 
 // =================== Cart Store ===================
@@ -69,8 +70,9 @@ const useTableStore = create(
     persist(
         (set) => ({
             tableId: null,
+            tableNumber: null,
             customerId: 1,
-            setTable: (tableId) => set({ tableId }),
+            setTable: (table) => set({ tableId: table.id, tableNumber: table.tableNumber }),
             setCustomer: (customerId) => set({ customerId }),
             clear: () => set({ tableId: null, customerId: null }),
         }),
@@ -352,13 +354,29 @@ export default function MenuClient() {
     }, [auth.loading, auth.user, sessionChecked]);
 
     // Initialize Table from URL
+    const tableParam = searchParams.get('table');
+
     useEffect(() => {
-        const tableParam = searchParams.get('table');
-        if (tableParam && !tableStore.tableId) {
-            tableStore.setTable(tableParam);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams]);
+        const initTableFromUrl = async () => {
+            // Không có param hoặc đã có tableId thì thôi
+            if (!tableParam || tableStore.tableId) return;
+
+            try {
+                const response = await tableAPI.getById(tableParam);
+                const table = response?.data?.data;
+
+                if (table) {
+                    tableStore.setTable(table);
+                }
+            } catch (err) {
+                console.error('Error fetching table from URL param:', err);
+                // Nếu muốn thì toast ở đây
+                // toast.error('Không thể tải bàn từ URL');
+            }
+        };
+
+        initTableFromUrl();
+    }, [tableParam, tableStore.tableId]);
 
     // Show Auth Modal when navigating to features that require login
     useEffect(() => {
@@ -636,7 +654,7 @@ export default function MenuClient() {
                 onMenuClick={() =>
                     setActive(active === 'menu' ? 'user' : 'menu')
                 }
-                tableNumber={tableStore.tableId}
+                tableNumber={tableStore.tableNumber}
                 onLogout={onLogout}
                 onLoginClick={() => setShowAuthModal(true)}
             />
@@ -648,7 +666,7 @@ export default function MenuClient() {
                     {active === 'menu' && (
                         <section className="px-4 lg:px-0 pt-4 pb-4 lg:mb-6 animate-fade-in">
                             <div className="max-w-6xl mx-auto">
-                                {tableStore.tableId && (
+                                {tableStore.tableNumber && (
                                     <div
                                         className={`${tone.card} rounded-2xl p-4 mb-4 flex items-center gap-3`}
                                     >
@@ -658,7 +676,7 @@ export default function MenuClient() {
                                         />
                                         <div>
                                             <div className="font-semibold text-orange-700">
-                                                Bàn số {tableStore.tableId}
+                                                Bàn số {tableStore.tableNumber}
                                             </div>
                                             <div className="text-xs text-gray-600">
                                                 {tableStore.customerId === 1
@@ -860,7 +878,7 @@ export default function MenuClient() {
             <AuthGateModal
                 open={showAuthModal}
                 onClose={handleAuthModalClose}
-                tableNumber={tableStore.tableId}
+                tableNumber={tableStore.tableNumber}
                 setCustomerId={setLoggedInCustomerId}
             />
 

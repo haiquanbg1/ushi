@@ -318,9 +318,9 @@ export default function HomePage() {
 									<p className="mt-1 line-clamp-2 text-sm text-gray-500">{dish.description}</p>
 									<div className="mt-3 flex items-center justify-between">
 										<p className="text-xl font-bold text-orange-600">{dish.price}</p>
-										<button className="rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-semibold text-white hover:from-orange-700 hover:to-red-700">
+										{/* <button className="rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-semibold text-white hover:from-orange-700 hover:to-red-700">
 											Đặt Món
-										</button>
+										</button> */}
 									</div>
 								</div>
 							</div>
