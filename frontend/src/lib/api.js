@@ -10,17 +10,16 @@ const apiClient = axios.create({
     withCredentials: true,
 });
 
-// // Response interceptor để xử lý lỗi
-// apiClient.interceptors.response.use(
-//     (response) => response.data,
-//     (error) => {
-//         if (error.response?.status === 401) {
-//             localStorage.removeItem('token');
-//             window.location.href = '/login';
-//         }
-//         return Promise.reject(error);
-//     }
-// );
+// Response interceptor để xử lý lỗi
+apiClient.interceptors.response.use(
+    (response) => response.data,
+    (error) => {
+        if (error.response?.status === 401) {
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
 
 // Generic API helper
 export const api = {

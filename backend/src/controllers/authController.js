@@ -10,7 +10,8 @@ const ms = require("ms");
 const COOKIE_CONFIG = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    domain: "https://ushi-xrzb.vercel.app",
     path: '/'
 };
 

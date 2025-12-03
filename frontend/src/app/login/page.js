@@ -137,12 +137,12 @@ export default function LoginPage() {
                         {submitting ? 'Đang đăng nhập…' : 'Đăng nhập'}
                     </button>
 
-                    <div className="text-center text-sm text-gray-600">
+                    {/* <div className="text-center text-sm text-gray-600">
                         Chưa có tài khoản?{' '}
                         <a href="/register" className="font-medium text-orange-500 hover:text-orange-600">
                             Đăng ký
                         </a>
-                    </div>
+                    </div> */}
                 </form>
             </main>
         </div>

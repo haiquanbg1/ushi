@@ -25,7 +25,7 @@ module.exports = {
         phone: '0384336855',
         email: 'staff1@restaurant.com',
         password: hashedPassword,
-        roleId: 4,
+        roleId: 2,
         isActive: true,
         lastLoginAt: new Date(),
         createdAt: new Date(),
