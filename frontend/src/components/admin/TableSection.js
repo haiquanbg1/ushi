@@ -177,7 +177,7 @@ function TablesSection() {
         return labelMap[status] || status;
     };
 
-    if (loading && rows.length === 0) {
+    if (loading && rows && rows.length === 0) {
         return <div className="text-center py-8">Đang tải...</div>;
     }
 
