@@ -695,8 +695,8 @@ export default function Page() {
                                                 setCategory(c.id)
                                             }
                                             className={`px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all duration-200 ring-1 ${category === c.id
-                                                    ? 'bg-orange-600 text-white ring-orange-600 shadow-lg shadow-orange-200 scale-105'
-                                                    : 'bg-white text-orange-700 ring-orange-200 hover:bg-orange-50 hover:ring-orange-300'
+                                                ? 'bg-orange-600 text-white ring-orange-600 shadow-lg shadow-orange-200 scale-105'
+                                                : 'bg-white text-orange-700 ring-orange-200 hover:bg-orange-50 hover:ring-orange-300'
                                                 }`}
                                         >
                                             {c.name}
@@ -915,3 +915,4 @@ export default function Page() {
         </div>
     );
 }
+
