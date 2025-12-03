@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
             setUser(user);
             return { success: true, id: user.id, role: user.role.roleName };
         } catch (error) {
+            console.log(error)
             return {
                 success: false,
                 error: error.response?.data?.message || 'Đăng nhập thất bại'
