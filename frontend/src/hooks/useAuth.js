@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (credentials) => {
         try {
             const response = await authAPI.login(credentials);
+            console.log(response)
             const { user } = response.data.data;
 
             setUser(user);
