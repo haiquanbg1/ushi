@@ -153,6 +153,7 @@ module.exports = {
             res.cookie("accessToken", accessToken, ACCESS_TOKEN_CONFIG);
             res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_CONFIG);
 
+            console.log('📤 Set-Cookie Headers:', res.getHeaders()['set-cookie']);
             console.info(`User ${user.username} logged in successfully`);
 
             return successResponse(
@@ -186,15 +187,8 @@ module.exports = {
      */
     logout: async (req, res) => {
         try {
-            const cookieOptions = {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                path: '/'
-            };
-
-            res.clearCookie("accessToken", cookieOptions);
-            res.clearCookie("refreshToken", cookieOptions);
+            res.clearCookie("accessToken", COOKIE_CONFIG);
+            res.clearCookie("refreshToken", COOKIE_CONFIG);
 
             return successResponse(
                 res,
