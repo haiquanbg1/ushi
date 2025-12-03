@@ -501,7 +501,7 @@ function MenuSection() {
 
                 {/* LIST: max 4 item, còn lại cuộn */}
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {comboItemsList.length === 0 ? (
+                    {comboItemsList && comboItemsList.length === 0 ? (
                         <p className="text-xs text-slate-400">Chưa có món nào</p>
                     ) : (
                         comboItemsList.map(ci => (
@@ -600,7 +600,7 @@ function MenuSection() {
                                 </div>
                             </div>
                         ))}
-                        {items.length === 0 && <div className="text-center text-sm text-slate-400">Chưa có món nào</div>}
+                        {items && items.length === 0 && <div className="text-center text-sm text-slate-400">Chưa có món nào</div>}
                     </div>
 
                     {/* Table for ≥ sm */}
@@ -644,7 +644,7 @@ function MenuSection() {
                                         </td>
                                     </tr>
                                 ))}
-                                {items.length === 0 && (
+                                {items && items.length === 0 && (
                                     <tr>
                                         <td colSpan={6} className="px-3 py-6 text-center text-slate-400">Chưa có món nào</td>
                                     </tr>
@@ -851,7 +851,7 @@ function MenuSection() {
                                 {selectedCombo?.id === cb.id && <ComboItemsSection showForm={false} />}
                             </div>
                         ))}
-                        {combos.length === 0 && <div className="text-center text-sm text-slate-400">Chưa có combo nào</div>}
+                        {combos && combos.length === 0 && <div className="text-center text-sm text-slate-400">Chưa có combo nào</div>}
                     </div>
 
                     {/* Table for ≥ sm */}
@@ -913,7 +913,7 @@ function MenuSection() {
                                     </React.Fragment>
                                 ))}
 
-                                {combos.length === 0 && (
+                                {combos && combos.length === 0 && (
                                     <tr>
                                         <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
                                             Chưa có combo nào
@@ -1082,7 +1082,7 @@ function MenuSection() {
                                 </div>
                             );
                         })}
-                        {categories.length === 0 && <div className="text-center text-sm text-slate-400">Chưa có danh mục</div>}
+                        {categories && categories.length === 0 && <div className="text-center text-sm text-slate-400">Chưa có danh mục</div>}
                     </div>
 
                     {/* Table for ≥ sm */}
@@ -1127,7 +1127,7 @@ function MenuSection() {
                                         </tr>
                                     );
                                 })}
-                                {categories.length === 0 && (
+                                {categories && categories.length === 0 && (
                                     <tr>
                                         <td colSpan={5} className="px-3 py-6 text-center text-slate-400">Chưa có danh mục</td>
                                     </tr>
