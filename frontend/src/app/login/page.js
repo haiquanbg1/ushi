@@ -39,7 +39,7 @@ export default function LoginPage() {
 
         const response = await login({ phone, password });
         const data = response;
-        console.log(response);
+        // console.log(response);
 
         if (!data?.success) {
             const msg =

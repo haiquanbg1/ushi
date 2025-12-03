@@ -36,13 +36,11 @@ export const AuthProvider = ({ children }) => {
     const login = async (credentials) => {
         try {
             const response = await authAPI.login(credentials);
-            console.log(response)
-            const { user } = response.data.data;
+            const { user } = response.data;
 
             setUser(user);
             return { success: true, id: user.id, role: user.role.roleName };
         } catch (error) {
-            console.log(error)
             return {
                 success: false,
                 error: error.response?.data?.message || 'Đăng nhập thất bại'
