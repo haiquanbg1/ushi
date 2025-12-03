@@ -16,12 +16,15 @@ export default function HistoryPanel({ onOpenDetail, auth, customerId }) {
     useEffect(() => {
         let mounted = true;
         const load = async () => {
-            customerId = auth.user?.customerId || customerId;
+
             try {
+                const customer = await customerAPI.getByUser(auth.user.id)
+                customerId = customer.data?.data?.id;
+
                 setLoading(true);
                 setError(null);
                 const res = await orderAPI.getByCustomer(customerId);
-                // console.log(customerId, res.data.data)
+                console.log(customerId, res.data.data)
                 const list = (res?.data?.data || []).map((o) => ({
                     ...o,
                     at: o.createdAt || o.created_at || o.at,

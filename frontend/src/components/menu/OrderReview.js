@@ -38,7 +38,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
 
     useEffect(() => {
         fetchCurrentOrder();
-        const interval = setInterval(fetchCurrentOrder, 5000);
+        const interval = setInterval(fetchCurrentOrder, 30000);
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [customerId, tableId]);
@@ -324,6 +324,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
             await orderAPI.update(currentOrder.id, {
                 discountAmount: discount,
                 totalAmount: total,
+                orderStatus: "confirmed"
             });
 
             // Nếu có mã giảm giá, đánh dấu là đã sử dụng (optional nhưng nên có)
@@ -432,7 +433,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                 </div>
 
                 <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
-                    {(orderItems && []).map((item) => {
+                    {(orderItems ?? []).map((item) => {
                         // xác định combo hay món thường
                         const isCombo = !!item.comboId || !!item.combo;
                         const name = isCombo

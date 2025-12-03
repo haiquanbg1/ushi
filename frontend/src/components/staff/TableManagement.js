@@ -189,11 +189,6 @@ const TableManagement = () => {
         const paidAmount = parseFloat(paymentData.paidAmount);
         const amount = parseFloat(pendingPayment.amount);
 
-        if (isNaN(paidAmount) || paidAmount <= 0) {
-            setPaymentError('Số tiền nhận phải lớn hơn 0');
-            return;
-        }
-
         if (paidAmount < amount) {
             setPaymentError(`Số tiền nhận phải lớn hơn hoặc bằng ${amount.toLocaleString('vi-VN')}đ`);
             return;
@@ -573,7 +568,7 @@ const TableManagement = () => {
                                         });
                                     }}
                                     onBlur={() => {
-                                        if (!paymentData.paidAmount || parseFloat(paymentData.paidAmount) <= 0) {
+                                        if (!paymentData.paidAmount || parseFloat(paymentData.paidAmount) < 0) {
                                             setPaymentError('Vui lòng nhập số tiền nhận');
                                         }
                                     }}
@@ -639,11 +634,11 @@ const TableManagement = () => {
                                     disabled={
                                         isProcessingPayment ||
                                         !paymentData.paidAmount ||
-                                        parseFloat(paymentData.paidAmount) <= 0
+                                        parseFloat(paymentData.paidAmount) < 0
                                     }
                                     className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${isProcessingPayment ||
                                         !paymentData.paidAmount ||
-                                        parseFloat(paymentData.paidAmount) <= 0
+                                        parseFloat(paymentData.paidAmount) < 0
                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         : 'bg-green-500 hover:bg-green-600 text-white'
                                         }`}

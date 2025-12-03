@@ -76,6 +76,16 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
             }
 
             if (existingOrder && existingOrder.id) {
+                // Lấy status đúng field
+                const status = existingOrder.orderStatus || existingOrder.status;
+
+                // Nếu order đang pending (chưa xử lý/đang chờ thanh toán...)
+                if (status === 'confirmed') {
+                    alert('Bạn phải thanh toán hóa đơn trước');
+                    setPlacing(false);
+                    return;
+                }
+
                 // Merge items
                 const itemsToAdd = cart?.items?.map((i) =>
                     i.type === 'combo'
