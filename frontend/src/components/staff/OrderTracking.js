@@ -29,7 +29,7 @@ export default function OrderTracking() {
 
             // Với mỗi order, lấy thêm order details (items)
             const ordersWithItems = await Promise.all(
-                ordersData.map(async (order) => {
+                ordersData?.map(async (order) => {
                     try {
                         const items = await staffAPI.getOrderItems(order.id);
                         return {
@@ -65,11 +65,11 @@ export default function OrderTracking() {
 
             // Cập nhật local state
             setOrders((prev) => {
-                const updated = prev.map((order) =>
+                const updated = prev?.map((order) =>
                     order.id === orderId
                         ? {
                             ...order,
-                            items: order.items.map((i) =>
+                            items: order?.items?.map((i) =>
                                 i.id === orderDetailId ? { ...i, status: newStatus } : i
                             ),
                         }
@@ -232,7 +232,7 @@ export default function OrderTracking() {
             {/* Hiển thị theo ĐƠN HÀNG */}
             {viewMode === 'orders' && (
                 <>
-                    {filteredOrders.length === 0 ? (
+                    {filteredOrders && filteredOrders.length === 0 ? (
                         <div className="text-center py-12 bg-gray-50 rounded-lg">
                             <p className="text-gray-500 text-lg">Không có đơn hàng nào</p>
                         </div>
@@ -422,7 +422,7 @@ export default function OrderTracking() {
                         </button>
                     </div>
 
-                    {filteredItems.length === 0 ? (
+                    {filteredItems && filteredItems.length === 0 ? (
                         <div className="text-center py-12 bg-gray-50 rounded-lg">
                             <p className="text-gray-500 text-lg">Không có món ăn nào</p>
                         </div>
@@ -698,7 +698,7 @@ function ItemDetailModal({ data, onClose }) {
                                 Thành phần combo ({components.length})
                             </div>
                             <div className="max-h-48 overflow-y-auto divide-y divide-gray-100 bg-white">
-                                {components.length === 0 ? (
+                                {components && components.length === 0 ? (
                                     <div className="px-3 py-3 text-xs text-gray-500">
                                         Chưa có dữ liệu thành phần combo
                                     </div>

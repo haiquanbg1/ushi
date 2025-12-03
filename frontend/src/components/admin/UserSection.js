@@ -218,7 +218,7 @@ function UsersSection() {
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.length === 0 && (
+                            {rows && rows.length === 0 && (
                                 <tr>
                                     <Td colSpan={6} className="py-6 text-center text-slate-400">
                                         Chưa có người dùng nào.
@@ -226,7 +226,7 @@ function UsersSection() {
                                 </tr>
                             )}
 
-                            {rows.map((u, idx) => {
+                            {(rows ?? []).map((u, idx) => {
                                 const isProcessing = processingId === u.id;
 
                                 return (
@@ -334,7 +334,7 @@ function UsersSection() {
                         required
                     >
                         <option value="">Chọn vai trò</option>
-                        {roles.map((r) => (
+                        {(roles ?? []).map((r) => (
                             <option key={r.id} value={r.id}>
                                 {r.roleName}
                             </option>

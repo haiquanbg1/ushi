@@ -17,7 +17,7 @@ export default function ComboModal({ combo, open, onClose, onAdd }) {
             combo.comboItems ||
             combo.components ||
             [];
-        return raw.map((c, idx) => ({
+        return raw?.map((c, idx) => ({
             _key: c.id || c.itemId || idx,           // key an toàn
             id: c.id || c.itemId,
             name: c.item?.name || c.name,
@@ -103,7 +103,7 @@ export default function ComboModal({ combo, open, onClose, onAdd }) {
 
                         {openDetails && (
                             <div className="max-h-52 overflow-y-auto divide-y divide-orange-50 bg-white">
-                                {components.length === 0 ? (
+                                {components && components.length === 0 ? (
                                     <div className="px-4 py-3 text-xs text-gray-500">
                                         Chưa có dữ liệu thành phần
                                     </div>

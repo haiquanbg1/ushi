@@ -105,7 +105,7 @@ export default function HistoryPanel({ onOpenDetail, auth, customerId }) {
                 <div className="text-red-600">{error}</div>
             ) : (
                 <div className="grid gap-4 lg:grid-cols-2">
-                    {orders.length === 0 ? (
+                    {orders && orders.length === 0 ? (
                         <div className="text-gray-600 col-span-2">Chưa có đơn hàng</div>
                     ) : (
                         orders.map((o, idx) => {

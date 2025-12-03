@@ -77,7 +77,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
 
             if (existingOrder && existingOrder.id) {
                 // Merge items
-                const itemsToAdd = cart.items.map((i) =>
+                const itemsToAdd = cart?.items?.map((i) =>
                     i.type === 'combo'
                         ? {
                             comboId: i.id,
@@ -122,7 +122,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
 
                 // Tạo chi tiết order lần đầu (item / combo)
                 await Promise.all(
-                    cart.items.map((i) =>
+                    cart?.items?.map((i) =>
                         orderDetailAPI.create(
                             i.type === 'combo'
                                 ? {
@@ -192,7 +192,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                     ) : (
                         <>
                             <div className="flex-1 overflow-y-auto -mx-4 px-4 sm:-mx-6 sm:px-6 space-y-3 mb-4">
-                                {cart.items.map((i) => {
+                                {cart?.items?.map((i) => {
                                     const isCombo = i.type === 'combo';
                                     const components =
                                         i.components ||
@@ -245,10 +245,10 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                                                     {isCombo && components.length > 0 && (
                                                         <details className="mt-1">
                                                             <summary className="text-xs text-sky-700 cursor-pointer select-none">
-                                                                Thành phần ({components.length})
+                                                                Thành phần ({components ? components.length : 0})
                                                             </summary>
                                                             <ul className="mt-1 pl-3 text-xs text-gray-600 max-h-24 overflow-y-auto border-l border-orange-100/70">
-                                                                {components.map((c, idx) => (
+                                                                {(components && []).map((c, idx) => (
                                                                     <li key={c.id || c.itemId || idx}>
                                                                         • {c.item?.name || c.name}{' '}
                                                                         {c.quantity ? `x${c.quantity}` : ''}

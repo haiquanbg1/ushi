@@ -432,7 +432,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                 </div>
 
                 <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
-                    {orderItems.map((item) => {
+                    {(orderItems && []).map((item) => {
                         // xác định combo hay món thường
                         const isCombo = !!item.comboId || !!item.combo;
                         const name = isCombo
@@ -481,13 +481,13 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                                     </div>
 
                                     {/* Dropdown thành phần combo */}
-                                    {isCombo && components.length > 0 && (
+                                    {isCombo && components && components.length > 0 && (
                                         <details className="mt-1">
                                             <summary className="text-xs text-sky-700 cursor-pointer select-none">
-                                                Thành phần combo ({components.length})
+                                                Thành phần combo ({components ? components.length : 0})
                                             </summary>
                                             <ul className="mt-1 pl-3 text-xs text-gray-600 max-h-24 overflow-y-auto border-l border-orange-100/70">
-                                                {components.map((c, idx) => (
+                                                {(components ?? []).map((c, idx) => (
                                                     <li key={c.id || c.itemId || idx}>
                                                         • {c.item?.name || c.name}{' '}
                                                         {c.quantity ? `x${c.quantity}` : ''}
@@ -577,7 +577,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                                     <div className="text-center py-4 text-sm text-gray-600">
                                         Đang tải mã giảm giá...
                                     </div>
-                                ) : availablePromotions.length === 0 ? (
+                                ) : availablePromotions && availablePromotions.length === 0 ? (
                                     <div className="text-center py-4 text-sm text-gray-600">
                                         Không có mã giảm giá khả dụng
                                     </div>

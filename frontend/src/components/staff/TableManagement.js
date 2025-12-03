@@ -145,7 +145,7 @@ const TableManagement = () => {
     const updateTableStatus = async (tableId, newStatus) => {
         try {
             await staffAPI.updateTableStatus(tableId, newStatus);
-            setTables(tables.map(table =>
+            setTables(tables?.map(table =>
                 table.id === tableId ? { ...table, status: newStatus } : table
             ));
         } catch (error) {
@@ -313,7 +313,7 @@ const TableManagement = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {tables.map(table => (
+                {(tables ?? []).map(table => (
                     <div
                         key={table.id}
                         onClick={() => handleTableClick(table)}
@@ -507,7 +507,7 @@ const TableManagement = () => {
                                 </p>
                             </div>
 
-                            {pendingPayment.order?.items?.length > 0 && (
+                            {pendingPayment.order?.items && pendingPayment.order?.items?.length > 0 && (
                                 <div className="border-t pt-3 mt-2 space-y-2">
                                     <h4 className="text-sm font-semibold mb-1">
                                         Chi tiết món đã gọi

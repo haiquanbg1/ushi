@@ -194,7 +194,7 @@ function TablesSection() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {rows.map((t) => (
+                {(rows ?? []).map((t) => (
                     <div
                         key={t.id}
                         className="rounded-2xl border border-slate-800 bg-slate-950 p-4"
@@ -228,7 +228,7 @@ function TablesSection() {
                 ))}
             </div>
 
-            {rows.length === 0 && (
+            {rows && rows.length === 0 && (
                 <div className="text-center py-12 text-slate-400">
                     <p>Chưa có bàn nào</p>
                     <button

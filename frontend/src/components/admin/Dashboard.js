@@ -161,14 +161,14 @@ function DashboardSection() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={comboShare.length > 0 ? comboShare : []}
+                                    data={comboShare && comboShare.length > 0 ? comboShare : []}
                                     cx="50%"
                                     cy="50%"
                                     outerRadius={90}
                                     dataKey="value"
                                     nameKey="name"
                                 >
-                                    {comboShare.map((entry, index) => (
+                                    {(comboShare ?? []).map((entry, index) => (
                                         <Cell
                                             key={`cell-${index}`}
                                             fill={

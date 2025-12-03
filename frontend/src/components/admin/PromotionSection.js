@@ -264,7 +264,7 @@ function PromotionsSection() {
 
             {/* ====== MOBILE: Cards ====== */}
             <div className="grid gap-3 sm:hidden">
-                {promotions.map((p) => (
+                {(promotions ?? []).map((p) => (
                     <div key={p.id} className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
@@ -325,7 +325,7 @@ function PromotionsSection() {
                         </div>
                     </div>
                 ))}
-                {promotions.length === 0 && (
+                {promotions && promotions.length === 0 && (
                     <div className="text-center py-8 text-slate-400 text-sm">
                         Chưa có khuyến mãi nào. Nhấn &quot;Thêm khuyến mãi&quot; để bắt đầu.
                     </div>
@@ -348,7 +348,7 @@ function PromotionsSection() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                        {promotions.map((p, i) => (
+                        {(promotions ?? []).map((p, i) => (
                             <tr key={p.id} className="hover:bg-slate-900/30 transition-colors">
                                 <td className="px-4 py-3 text-slate-400">{i + 1}</td>
                                 <td className="px-4 py-3 text-slate-200 font-medium">{p.name}</td>
@@ -410,7 +410,7 @@ function PromotionsSection() {
                                 </td>
                             </tr>
                         ))}
-                        {promotions.length === 0 && (
+                        {promotions && promotions.length === 0 && (
                             <tr>
                                 <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                                     Chưa có khuyến mãi nào. Nhấn &quot;Thêm khuyến mãi&quot; để bắt đầu.

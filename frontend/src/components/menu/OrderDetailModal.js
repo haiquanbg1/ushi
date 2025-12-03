@@ -102,7 +102,7 @@ export default function OrderDetailModal({ order, open, onClose }) {
 
                 {/* Lines */}
                 <div className="mt-4 max-h-[55vh] overflow-y-auto pr-1 -mr-1">
-                    {lineItems.length === 0 ? (
+                    {lineItems && lineItems.length === 0 ? (
                         <div className="text-sm text-gray-600">Không có chi tiết đơn hàng.</div>
                     ) : (
                         <ul className="space-y-3">
@@ -126,13 +126,13 @@ export default function OrderDetailModal({ order, open, onClose }) {
                                                 <span className="font-medium truncate">{it.name}</span>
                                             </div>
 
-                                            {it.isCombo && it.components.length > 0 && (
+                                            {it?.isCombo && it?.components?.length > 0 && (
                                                 <details className="mt-1 text-xs text-gray-600">
                                                     <summary className="cursor-pointer select-none">
                                                         Thành phần combo ({it.components.length})
                                                     </summary>
                                                     <ul className="mt-1 pl-3 border-l border-orange-100/70 max-h-28 overflow-y-auto">
-                                                        {it.components.map((c) => (
+                                                        {it?.components?.map((c) => (
                                                             <li key={c.id || c.itemId}>
                                                                 • {c.item?.name || c.name}{' '}
                                                                 {c.quantity ? `x${c.quantity}` : ''}
