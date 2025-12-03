@@ -594,7 +594,7 @@ function ItemDetailModal({ data, onClose }) {
     const quantity = Number(item.quantity || 0);
     const lineTotal = unitPrice * quantity;
 
-    console.log(item)
+    // console.log(item)
     const components =
         item.combo?.comboItems ||
         [];

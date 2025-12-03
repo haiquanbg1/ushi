@@ -84,7 +84,7 @@ const TableManagement = () => {
             try {
                 invoice = await staffAPI.getInvoiceByOrderId(activeOrder.id);
             } catch (error) {
-                console.log('No invoice found for order:', activeOrder.id);
+                // console.log('No invoice found for order:', activeOrder.id);
             }
 
             if (invoice) {

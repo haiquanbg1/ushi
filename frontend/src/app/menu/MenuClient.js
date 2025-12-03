@@ -262,14 +262,14 @@ export default function MenuClient() {
 
     // Debug
     useEffect(() => {
-        console.log('🔍 Debug State:', {
-            'auth.loading': auth.loading,
-            'auth.user': auth.user?.username || null,
-            sessionChecked,
-            showAuthModal,
-            customerId: tableStore.customerId,
-            authInitialized,
-        });
+        // console.log('🔍 Debug State:', {
+        //     'auth.loading': auth.loading,
+        //     'auth.user': auth.user?.username || null,
+        //     sessionChecked,
+        //     showAuthModal,
+        //     customerId: tableStore.customerId,
+        //     authInitialized,
+        // });
 
         const demo = async () => {
             if (auth.user && tableStore.customerId === 1) {
@@ -296,11 +296,11 @@ export default function MenuClient() {
             if (auth.loading) return;
             if (sessionChecked) return;
 
-            console.log('Auth Check:', {
-                user: auth.user,
-                loading: auth.loading,
-                customerId: tableStore.customerId,
-            });
+            // console.log('Auth Check:', {
+            //     user: auth.user,
+            //     loading: auth.loading,
+            //     customerId: tableStore.customerId,
+            // });
 
             if (auth.user) {
                 try {
@@ -448,7 +448,7 @@ export default function MenuClient() {
     const handleAuthModalClose = async (action, userData) => {
         setShowAuthModal(false);
 
-        console.log(action);
+        // console.log(action);
 
         if (action === 'skip') {
             tableStore.setCustomer(1);
@@ -456,7 +456,7 @@ export default function MenuClient() {
             pushToast({ message: 'Đang sử dụng tài khoản khách' });
         } else if (action === 'login' && userData) {
             try {
-                console.log('User logged in:', userData);
+                // console.log('User logged in:', userData);
                 const response = await customerAPI.getByUser(userData.id);
                 const customer = response.data?.data;
 

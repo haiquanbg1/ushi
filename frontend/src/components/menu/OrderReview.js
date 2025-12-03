@@ -91,7 +91,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                 setCurrentOrder(order);
                 const detailsRes = await orderDetailAPI.getByOrder(order.id);
                 const details = detailsRes?.data?.data || [];
-                console.log(details)
+                // console.log(details)
                 setOrderItems(details);
             } else {
                 setCurrentOrder(null);
@@ -254,7 +254,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                     promotion.id,
                     subtotal
                 );
-                console.log(res.data.data)
+                // console.log(res.data.data)
 
                 if (res.data?.data?.eligible) {
                     setAppliedCoupon(promotionData);

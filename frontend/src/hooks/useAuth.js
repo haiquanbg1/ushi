@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authAPI.checkAuth();
             setUser(response.data.data.user);
-            console.log(response.data.data.user);
+            // console.log(response.data.data.user);
         } catch (error) {
             setUser(null);
         } finally {

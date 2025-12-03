@@ -14,7 +14,8 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
     (response) => response.data,
     (error) => {
-        if (error.response?.status === 401 && error.response?.message !== "Người dùng chưa đăng nhập.") {
+        // console.log(error)
+        if (error.response?.status === 401 && error.response?.data?.message != "Bạn cần đăng nhập để tiếp tục.") {
             window.location.href = '/login';
         }
         return Promise.reject(error);

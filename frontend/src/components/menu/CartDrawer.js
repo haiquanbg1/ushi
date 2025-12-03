@@ -91,7 +91,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                         }
                 );
 
-                console.log(itemsToAdd)
+                // console.log(itemsToAdd)
 
                 const addItemsRes = await orderAPI.addItems(
                     existingOrder.id,
