@@ -33,7 +33,7 @@ function StatusPill({ s }) {
 
 export default function OrderDetailModal({ order, open, onClose }) {
 
-    const details = Array.isArray(order._details) ? order._details : [];
+    const details = order._details && Array.isArray(order._details) ? order._details : [];
     const when = order.at ? new Date(order.at) : null;
 
     const lineItems = useMemo(() => {
