@@ -124,7 +124,9 @@ export const comboAPI = {
     getActive: () => apiClient.get('/combos/active'),
     getById: (id) => apiClient.get(`/combos/${id}`),
     getItems: (id) => apiClient.get(`/combos/${id}/items`),
-    create: (combo) => apiClient.post('/combos', combo),
+    create: (combo) => apiClient.post('/combos', combo, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     update: (id, combo) => apiClient.put(`/combos/${id}`, combo),
     delete: (id) => apiClient.delete(`/combos/${id}`),
 };
