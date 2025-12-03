@@ -455,7 +455,7 @@ function MenuSection() {
                             onChange={e => setNewComboItem(f => ({ ...f, itemId: e.target.value }))}
                         >
                             <option value="">Chọn món</option>
-                            {items.map(it => (
+                            {(items ?? []).map(it => (
                                 <option key={it.id} value={it.id}>
                                     {it.name} - {money(it.price)}
                                 </option>
@@ -571,7 +571,7 @@ function MenuSection() {
 
                     {/* Mobile cards */}
                     <div className="grid gap-3 sm:hidden">
-                        {items.map((it) => (
+                        {(items ?? []).map((it) => (
                             <div key={it.id} className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
@@ -617,7 +617,7 @@ function MenuSection() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.map((it, i) => (
+                                {(items ?? []).map((it, i) => (
                                     <tr key={it.id} className="border-t border-slate-800">
                                         <td className="px-3 py-2">{i + 1}</td>
                                         <td className="px-3 py-2 text-slate-200">{it.name}</td>
@@ -696,7 +696,7 @@ function MenuSection() {
                                     onChange={e => setItemForm(f => ({ ...f, categoryId: e.target.value }))}
                                 >
                                     <option value="">Chọn danh mục</option>
-                                    {categories.map(c => (
+                                    {(categories ?? []).map(c => (
                                         <option key={c.id} value={c.id}>{c.categoryName}</option>
                                     ))}
                                 </select>
@@ -813,7 +813,7 @@ function MenuSection() {
 
                     {/* Mobile cards */}
                     <div className="grid gap-3 sm:hidden">
-                        {combos.map((cb) => (
+                        {(combos ?? []).map((cb) => (
                             <div key={cb.id} className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
@@ -867,7 +867,7 @@ function MenuSection() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {combos.map((cb, i) => (
+                                {(combos ?? []).map((cb, i) => (
                                     <React.Fragment key={cb.id}>
                                         <tr className="border-t border-slate-800">
                                             <td className="px-3 py-2">{i + 1}</td>
@@ -1051,7 +1051,7 @@ function MenuSection() {
 
                     {/* Mobile cards */}
                     <div className="grid gap-3 sm:hidden">
-                        {categories.map((cat) => {
+                        {(categories ?? []).map((cat) => {
                             const count = items.filter(it => it.categoryId === cat.id).length;
                             return (
                                 <div key={cat.id} className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
@@ -1098,7 +1098,7 @@ function MenuSection() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {categories.map((cat, i) => {
+                                {(categories ?? []).map((cat, i) => {
                                     const count = items.filter(it => it.categoryId === cat.id).length;
                                     return (
                                         <tr key={cat.id} className="border-t border-slate-800">
