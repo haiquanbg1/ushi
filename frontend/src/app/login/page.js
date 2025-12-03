@@ -16,7 +16,7 @@ export default function LoginPage() {
     const [err, setErr] = useState('');
 
     useEffect(() => {
-        // console.log(loading, isAuthenticated, user);
+        console.log(loading, isAuthenticated, user);
         if (!loading && isAuthenticated && user) {
             switch (user.role.roleName) {
                 case 'Admin':

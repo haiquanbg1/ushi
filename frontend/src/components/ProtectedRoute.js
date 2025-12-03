@@ -9,28 +9,31 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading) {
-            if (!isAuthenticated) {
-                router.push('/login');
-                return;
-            }
+        // CHỜ loading xong mới check
+        if (loading) return;
 
-            if (requiredRole && user?.role?.roleName !== requiredRole) {
-                // Redirect based on user role
-                switch (user?.role?.roleName) {
-                    case 'Admin':
-                        router.push('/admin');
-                        break;
-                    case 'Staff':
-                        router.push('/staff');
-                        break;
-                    default:
-                        break;
-                }
+        if (!isAuthenticated) {
+            router.push('/login');
+            return;
+        }
+
+        if (requiredRole && user?.role?.roleName !== requiredRole) {
+            // Redirect based on user role
+            switch (user?.role?.roleName) {
+                case 'Admin':
+                    router.push('/admin');
+                    break;
+                case 'Staff':
+                    router.push('/staff');
+                    break;
+                default:
+                    router.push('/login'); // Thêm fallback
+                    break;
             }
         }
     }, [isAuthenticated, loading, user, requiredRole, router]);
 
+    // Show loading cho đến khi auth check xong
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -39,7 +42,13 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
         );
     }
 
-    if (!isAuthenticated || (requiredRole && user?.role.roleName !== requiredRole)) {
+    // Không render gì nếu chưa authenticated
+    if (!isAuthenticated) {
+        return null;
+    }
+
+    // Không render gì nếu role không đúng
+    if (requiredRole && user?.role?.roleName !== requiredRole) {
         return null;
     }
 

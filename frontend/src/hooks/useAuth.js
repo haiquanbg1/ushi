@@ -15,7 +15,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true); // Bắt đầu là true
 
     useEffect(() => {
         checkAuthStatus();
@@ -25,18 +25,17 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authAPI.checkAuth();
             setUser(response.data.data.user);
-            // console.log(response.data.data.user);
         } catch (error) {
             setUser(null);
         } finally {
-            setLoading(false);
+            setLoading(false); // ✅ Chỉ set false sau khi check xong
         }
     };
 
     const login = async (credentials) => {
         try {
             const response = await authAPI.login(credentials);
-            const { user } = response.data;
+            const { user } = response.data.data;
 
             setUser(user);
             return { success: true, id: user.id, role: user.role.roleName };
@@ -66,7 +65,6 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            localStorage.removeItem('authToken');
             setUser(null);
         }
     };

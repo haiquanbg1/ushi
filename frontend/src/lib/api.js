@@ -11,16 +11,16 @@ const apiClient = axios.create({
 });
 
 // Response interceptor để xử lý lỗi
-apiClient.interceptors.response.use(
-    (response) => response.data,
-    (error) => {
-        // console.log(error)
-        if (error.response?.status === 401 && error.response?.data?.message != "Bạn cần đăng nhập để tiếp tục.") {
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
+// apiClient.interceptors.response.use(
+//     (response) => response.data,
+//     (error) => {
+//         // console.log(error)
+//         if (error.response?.status === 401 && error.response?.data?.message != "Bạn cần đăng nhập để tiếp tục.") {
+//             window.location.href = '/login';
+//         }
+//         return Promise.reject(error);
+//     }
+// );
 
 // Generic API helper
 export const api = {
