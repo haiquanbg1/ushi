@@ -514,39 +514,42 @@ const TableManagement = () => {
                                         Chi tiết món đã gọi
                                     </h4>
 
-                                    {pendingPayment.order.items.map((oi, index) => {
-                                        const target = oi.item || oi.combo;
-                                        if (!target) return null;
+                                    {/* 👇 Bọc list trong div này để giới hạn chiều cao */}
+                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1 scrollbar-thin">
+                                        {pendingPayment.order.items.map((oi, index) => {
+                                            const target = oi.item || oi.combo;
+                                            if (!target) return null;
 
-                                        const isCombo = !!oi.combo;
-                                        const name = target.name;
-                                        const quantity = oi.quantity || 1;
-                                        const lineTotal = (oi.unitPrice || 0) * quantity;
+                                            const isCombo = !!oi.combo;
+                                            const name = target.name;
+                                            const quantity = oi.quantity || 1;
+                                            const lineTotal = (oi.unitPrice || 0) * quantity;
 
-                                        return (
-                                            <div
-                                                key={index}
-                                                className="flex justify-between items-center text-sm border-b pb-2 last:border-b-0"
-                                            >
-                                                <div className="flex-1">
-                                                    <p className="font-medium">{name}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        {isCombo ? 'Combo' : 'Món lẻ'} • SL: {quantity}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="font-semibold">
-                                                        {lineTotal.toLocaleString('vi-VN')}đ
-                                                    </p>
-                                                    {oi.unitPrice && (
-                                                        <p className="text-[11px] text-gray-400">
-                                                            ({money(oi.unitPrice)} / {isCombo ? 'combo' : 'phần'})
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="flex justify-between items-center text-sm border-b pb-2 last:border-b-0"
+                                                >
+                                                    <div className="flex-1">
+                                                        <p className="font-medium">{name}</p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {isCombo ? 'Combo' : 'Món lẻ'} • SL: {quantity}
                                                         </p>
-                                                    )}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="font-semibold">
+                                                            {lineTotal.toLocaleString('vi-VN')}đ
+                                                        </p>
+                                                        {oi.unitPrice && (
+                                                            <p className="text-[11px] text-gray-400">
+                                                                ({money(oi.unitPrice)} / {isCombo ? 'combo' : 'phần'})
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             )}
 
