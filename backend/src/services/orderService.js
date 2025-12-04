@@ -44,7 +44,7 @@ class OrderService {
             // Update table status to 'occupied' if tableId is provided
             if (orderData.tableId) {
                 const TableService = require('./tableService');
-                await TableService.updateTable(orderData.tableId, { status: 'occupied' });
+                await TableService.updateTable(orderData.tableId, { status: 'reserved' });
             }
 
             return order;

@@ -93,45 +93,59 @@ function UsersSection() {
             return;
         }
 
-        try {
-            setSaving(true);
 
-            const data = {
-                username: form.username.trim(),
-                phone: form.phone.trim(),
-                roleId: parseInt(form.roleId, 10),
-                isActive: true
-            };
+        const data = {
+            username: form.username.trim(),
+            phone: form.phone.trim(),
+            roleId: parseInt(form.roleId, 10),
+            isActive: true
+        };
 
-            if (form.password) {
-                data.password = form.password;
-            }
+        if (form.password) {
+            data.password = form.password;
+        }
 
-            if (editingUser) {
+        if (editingUser) {
+            try {
+                setSaving(true);
                 await userAPI.update(editingUser.id, data);
                 toast.success('Cập nhật người dùng thành công.', {
                     title: 'Thành công'
                 });
-            } else {
+                closeModal();
+                await load();
+            } catch (err) {
+                const msg =
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    'Không thể lưu người dùng. Vui lòng thử lại.';
+                toast.error(msg, {
+                    title: 'Lỗi khi cập nhật.'
+                });
+            } finally {
+                setSaving(false)
+            }
+        } else {
+            try {
+                setSaving(true);
                 await userAPI.create(data);
                 toast.success('Tạo người dùng mới thành công.', {
                     title: 'Thành công'
                 });
+                closeModal();
+                await load();
+            } catch (err) {
+                const msg =
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    'Không thể lưu người dùng. Vui lòng thử lại.';
+                toast.error(msg, {
+                    title: 'Lỗi khi tạo.'
+                });
+            } finally {
+                setSaving(false)
             }
 
-            closeModal();
-            await load();
-        } catch (err) {
-            console.error('Error saving user:', err);
-            const msg =
-                err?.response?.data?.message ||
-                err?.message ||
-                'Không thể lưu người dùng. Vui lòng thử lại.';
-            toast.error(msg, {
-                title: 'Lỗi khi lưu'
-            });
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -295,12 +309,12 @@ function UsersSection() {
                     />
                     <input
                         className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
-                        placeholder="Số điện thoại (10-15 chữ số)"
+                        placeholder="Số điện thoại (10 chữ số)"
                         value={form.phone}
                         onChange={(e) =>
                             setForm((f) => ({ ...f, phone: e.target.value }))
                         }
-                        pattern="[0-9]{10,15}"
+                        pattern="[0-9]{10,10}"
                         required
                     />
                     <div>

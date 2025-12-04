@@ -6,8 +6,10 @@ const tone = {
     primary: 'bg-orange-600 hover:bg-orange-700 text-white transition-all duration-200',
 };
 
+const money = (v) => (Number(v || 0)).toLocaleString('vi-VN') + '₫';
+
 export default function ComboModal({ combo, open, onClose, onAdd }) {
-    const [openDetails, setOpenDetails] = useState(true);
+    const [openDetails, setOpenDetails] = useState(false);
 
     // Chuẩn hoá list thành phần: tuỳ backend trả về
     const components = useMemo(() => {
@@ -119,8 +121,8 @@ export default function ComboModal({ combo, open, onClose, onAdd }) {
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-0.5">
                                                     x{c.quantity}{' '}
-                                                    {c.isRequired && '• Bắt buộc'}{' '}
-                                                    {c.isDefault && '• Mặc định'}
+                                                    {/* {c.isRequired && '• Bắt buộc'}{' '}
+                                                    {c.isDefault && '• Mặc định'} */}
                                                 </div>
                                             </div>
                                         </div>
@@ -132,7 +134,7 @@ export default function ComboModal({ combo, open, onClose, onAdd }) {
 
                     <div className="flex items-center justify-between pt-4 border-t border-orange-100">
                         <div className="text-2xl font-extrabold text-orange-700">
-                            {(combo.price || 0).toLocaleString('vi-VN')}₫
+                            {money(combo.price)}
                         </div>
                         <button
                             onClick={handleAdd}

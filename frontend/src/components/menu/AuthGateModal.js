@@ -48,7 +48,7 @@ export default function AuthGateModal({ open, onClose, setCustomerId }) {
 
         if (tab === 'login') {
             const phone = loginForm.phone.trim();
-            if (!/^\+?\d{9,15}$/.test(phone)) return setErr('Số điện thoại không hợp lệ.');
+            if (!/^\+?\d{9,10}$/.test(phone)) return setErr('Số điện thoại không hợp lệ.');
 
             const r = await auth.login({
                 phone,
@@ -75,7 +75,7 @@ export default function AuthGateModal({ open, onClose, setCustomerId }) {
 
         // register
         const phone = registerForm.phone.trim();
-        if (!/^\+?\d{9,15}$/.test(phone)) return setErr('Số điện thoại không hợp lệ.');
+        if (!/^\+?\d{9,10}$/.test(phone)) return setErr('Số điện thoại không hợp lệ.');
         if (!registerForm.username.trim()) return setErr('Vui lòng nhập họ tên.');
         if (registerForm.password.length < 6) return setErr('Mật khẩu tối thiểu 6 ký tự.');
         if (registerForm.password !== registerForm.confirmPassword)

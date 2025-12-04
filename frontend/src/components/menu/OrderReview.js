@@ -317,6 +317,10 @@ export default function OrderReview({ customerId, tableId, onClose }) {
     const handlePayment = async () => {
         if (!currentOrder) return;
 
+        if (currentOrder.orderStatus === 'confirmed') {
+            return; // Không cho phép thanh toán nếu đã confirmed
+        }
+
         try {
             const effectiveCustomerId = customerId || 1;
 
@@ -325,6 +329,13 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                 discountAmount: discount,
                 totalAmount: total,
                 orderStatus: "confirmed"
+            });
+
+            setCurrentOrder({
+                ...currentOrder,
+                orderStatus: "confirmed",
+                discountAmount: discount,
+                totalAmount: total
             });
 
             // Nếu có mã giảm giá, đánh dấu là đã sử dụng (optional nhưng nên có)
@@ -692,11 +703,15 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                                     : 'Tất cả món đã hoàn thành'}
                             </span>
                         </div>
+
                         <button
                             onClick={handlePayment}
-                            className={`${tone.primary} w-full py-3 rounded-xl font-semibold text-base shadow-md hover:shadow-lg active:scale-[0.98] transition-all`}
+                            disabled={currentOrder.orderStatus === 'confirmed'}
+                            className={`${tone.primary} w-full py-3 rounded-xl font-semibold text-base shadow-md hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:active:scale-100`} // ← THÊM disabled styles
                         >
-                            Thanh toán
+                            {currentOrder.orderStatus === 'confirmed'
+                                ? 'Vui lòng chờ nhân viên xử lý thanh toán'
+                                : 'Thanh toán'}
                         </button>
                     </div>
                 </div>

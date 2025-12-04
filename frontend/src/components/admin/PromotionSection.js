@@ -133,17 +133,25 @@ function PromotionsSection() {
                 isActive: form.isActive,
             };
 
+            let promotion;
+
             if (editingPromotion) {
-                await promotionAPI.update(editingPromotion.id, data);
+                const response = await promotionAPI.update(editingPromotion.id, data);
+                promotion = response?.data?.data;
                 toast.success('Cập nhật khuyến mãi thành công.', { title: 'Thành công' });
             } else {
-                await promotionAPI.create(data);
+                const response = await promotionAPI.create(data);
+                promotion = response?.data?.data;
                 toast.success('Tạo khuyến mãi mới thành công.', { title: 'Thành công' });
             }
 
             setOpen(false);
             setEditingPromotion(null);
             await load();
+
+            if (!editingPromotion) {
+                openAssignModal(promotion)
+            }
         } catch (error) {
             console.error('Error saving promotion:', error);
             toast.error(
@@ -166,7 +174,7 @@ function PromotionsSection() {
             toast.success('Đã xóa khuyến mãi.', { title: 'Thành công' });
             await load();
         } catch (error) {
-            console.error('Error deleting promotion:', error);
+            console.error('Lỗi khi xóa khuyến mãi:', error);
             toast.error(
                 error.response?.data?.message || 'Không thể xóa khuyến mãi.',
                 { title: 'Lỗi' }
@@ -206,7 +214,7 @@ function PromotionsSection() {
             setAssignModalOpen(false);
             setSelectedPromotion(null);
         } catch (error) {
-            console.error('Error assigning promotion:', error);
+            console.error('Lỗi khi gán khuyến mãi:', error);
             toast.error(
                 error.response?.data?.message || 'Không thể gán khuyến mãi.',
                 { title: 'Lỗi' }
@@ -300,13 +308,13 @@ function PromotionsSection() {
                                 >
                                     <TrendingUp className="size-4" />
                                 </button> */}
-                                <button
+                                {/* <button
                                     onClick={() => openAssignModal(p)}
                                     className="p-2 rounded-lg bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 transition-colors"
                                     title="Gán khách hàng"
                                 >
                                     <Users className="size-4" />
-                                </button>
+                                </button> */}
                                 <button
                                     onClick={() => openModal(p)}
                                     className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
@@ -385,13 +393,13 @@ function PromotionsSection() {
                                         >
                                             <TrendingUp className="size-4" />
                                         </button> */}
-                                        <button
+                                        {/* <button
                                             onClick={() => openAssignModal(p)}
                                             className="p-2 rounded-lg bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 transition-colors"
                                             title="Gán khách hàng"
                                         >
                                             <Users className="size-4" />
-                                        </button>
+                                        </button> */}
                                         <button
                                             onClick={() => openModal(p)}
                                             className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"

@@ -20,6 +20,8 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
         [cart.items]
     );
 
+    const money = (v) => (Number(v || 0)).toLocaleString('vi-VN') + '₫';
+
     const handlePlaceOrder = async () => {
         if (cart.items.length === 0) return;
 
@@ -202,7 +204,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                     ) : (
                         <>
                             <div className="flex-1 overflow-y-auto -mx-4 px-4 sm:-mx-6 sm:px-6 space-y-3 mb-4">
-                                {cart?.items?.map((i) => {
+                                {cart?.items?.map((i, idx) => {
                                     const isCombo = i.type === 'combo';
                                     const components =
                                         i.components ||
@@ -212,7 +214,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
 
                                     return (
                                         <div
-                                            key={`${i.type || 'item'}-${i.id}`}
+                                            key={`${i.type || 'item'}-${i.id}-${idx}`}
                                             className={`${tone.card} rounded-xl sm:rounded-2xl p-3 sm:p-4`}
                                         >
                                             <div className="flex items-start gap-3 sm:gap-4">
@@ -247,7 +249,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                                                     </div>
 
                                                     <div className="text-xs sm:text-sm text-gray-500">
-                                                        {i.price.toLocaleString('vi-VN')}₫ /{' '}
+                                                        {money(i.price)} /{' '}
                                                         {isCombo ? 'combo' : 'món'}
                                                     </div>
 
@@ -258,7 +260,7 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                                                                 Thành phần ({components ? components.length : 0})
                                                             </summary>
                                                             <ul className="mt-1 pl-3 text-xs text-gray-600 max-h-24 overflow-y-auto border-l border-orange-100/70">
-                                                                {(components && []).map((c, idx) => (
+                                                                {(components ?? []).map((c, idx) => (
                                                                     <li key={c.id || c.itemId || idx}>
                                                                         • {c.item?.name || c.name}{' '}
                                                                         {c.quantity ? `x${c.quantity}` : ''}

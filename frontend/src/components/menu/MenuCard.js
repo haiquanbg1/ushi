@@ -7,6 +7,8 @@ const tone = {
         'bg-orange-600 hover:bg-orange-700 text-white transition-all duration-200',
 };
 
+const money = (v) => (Number(v || 0)).toLocaleString('vi-VN') + '₫';
+
 export default function MenuCard({ item, onAdd, onOpen }) {
     const isCombo = item.type === 'combo';
 
@@ -51,7 +53,7 @@ export default function MenuCard({ item, onAdd, onOpen }) {
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="text-orange-700 font-extrabold text-sm sm:text-lg">
-                        {(item.price || 0).toLocaleString('vi-VN')}₫
+                        {money(item.price)}
                     </div>
                     <button
                         onClick={onAdd}

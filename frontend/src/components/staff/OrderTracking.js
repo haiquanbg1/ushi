@@ -212,7 +212,7 @@ export default function OrderTracking() {
                 <button
                     onClick={() => setViewMode('orders')}
                     className={`px-4 py-2 rounded-lg font-semibold ${viewMode === 'orders'
-                        ? 'bg-purple-500 text-white'
+                        ? 'bg-purple-500 text-white hover:bg-purple-600'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                 >
@@ -221,7 +221,7 @@ export default function OrderTracking() {
                 <button
                     onClick={() => setViewMode('items')}
                     className={`px-4 py-2 rounded-lg font-semibold ${viewMode === 'items'
-                        ? 'bg-purple-500 text-white'
+                        ? 'bg-purple-500 text-white hover:bg-purple-600'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                 >
@@ -290,7 +290,7 @@ export default function OrderTracking() {
                                                             {/* Tên món – click để xem detail */}
                                                             <button
                                                                 type="button"
-                                                                className="text-left font-medium hover:text-purple-600"
+                                                                className="text-left font-medium hover:text-orange-400"
                                                                 onClick={() =>
                                                                     setDetailTarget({
                                                                         item,
@@ -713,8 +713,8 @@ function ItemDetailModal({ data, onClose }) {
                                                     {c.item?.name || c.name}
                                                 </div>
                                                 <div className="text-[11px] text-gray-500">
-                                                    {c.isRequired && 'Bắt buộc '}
-                                                    {c.isDefault && '• Mặc định'}
+                                                    {/* {c.isRequired && 'Bắt buộc '}
+                                                    {c.isDefault && '• Mặc định'} */}
                                                 </div>
                                             </div>
                                             <div className="text-xs font-semibold text-gray-700">

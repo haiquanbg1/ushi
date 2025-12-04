@@ -7,6 +7,8 @@ const tone = {
         'bg-orange-600 hover:bg-orange-700 text-white transition-all duration-200',
 };
 
+const money = (v) => (Number(v || 0)).toLocaleString('vi-VN') + '₫';
+
 export default function ItemModal({ item, open, onClose, onAdd }) {
     if (!open || !item) return null;
 
@@ -48,7 +50,7 @@ export default function ItemModal({ item, open, onClose, onAdd }) {
 
                     <div className="flex items-center justify-between pt-4 border-top border-orange-100">
                         <div className="text-2xl font-extrabold text-orange-700">
-                            {(item.price || 0).toLocaleString('vi-VN')}₫
+                            {money(item.price)}
                         </div>
                         <button
                             onClick={() => {

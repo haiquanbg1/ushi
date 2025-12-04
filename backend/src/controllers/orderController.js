@@ -1,4 +1,5 @@
 const OrderService = require('../services/orderService');
+const TableService = require("../services/tableService");
 
 exports.list = async (req, res) => {
     try { res.json({ ok: true, data: await OrderService.getAllOrders() }); }
@@ -16,7 +17,13 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    try { res.json({ ok: true, data: await OrderService.updateOrder(req.params.id, req.body) }); }
+    try {
+        const data = await OrderService.updateOrder(req.params.id, req.body);
+        console.log(data);
+        await TableService.updateTable(data.tableId, { status: "occupied" });
+
+        res.json({ ok: true, data });
+    }
     catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 };
 

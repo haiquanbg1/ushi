@@ -21,6 +21,7 @@ const TableManagement = () => {
     });
     const [paymentError, setPaymentError] = useState(''); // ✅ Thêm state cho validation error
     const [isProcessingPayment, setIsProcessingPayment] = useState(false); // ✅ Loading state
+    const money = (v) => (Number(v || 0)).toLocaleString('vi-VN') + '₫';
 
     useEffect(() => {
         fetchTables();
@@ -91,6 +92,7 @@ const TableManagement = () => {
                 setSelectedTable({
                     ...table,
                     orderId: activeOrder.id,
+                    order: activeOrder,
                     orderDetails: {
                         ...activeOrder,
                         items: orderItems,
@@ -233,8 +235,8 @@ const TableManagement = () => {
     const getStatusText = (status) => {
         switch (status) {
             case 'available': return 'Trống';
-            case 'occupied': return 'Có khách';
-            case 'reserved': return 'Đã đặt';
+            case 'occupied': return 'Yêu cầu thanh toán';
+            case 'reserved': return 'Đang dùng bữa';
             case 'cleaning': return 'Dọn dẹp';
             default: return status;
         }
@@ -275,7 +277,7 @@ const TableManagement = () => {
                     <p className="text-red-600 text-xl mb-4">{error}</p>
                     <button
                         onClick={fetchTables}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                        className="px-4 py-2 bg-orange-400 text-white rounded-lg hover:bg-orange-500"
                     >
                         Thử lại
                     </button>
@@ -290,9 +292,9 @@ const TableManagement = () => {
                 <h2 className="text-2xl font-bold">Quản lý Bàn</h2>
                 <button
                     onClick={fetchTables}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
                 >
-                    🔄 Làm mới
+                    Làm mới
                 </button>
             </div>
 
@@ -302,8 +304,12 @@ const TableManagement = () => {
                     <span className="text-sm">Trống</span>
                 </div>
                 <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-yellow-100 border-2 border-yellow-200 rounded"></div>
+                    <span className="text-sm">Đang dùng bữa</span>
+                </div>
+                <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-red-200 border-2 border-red-300 rounded"></div>
-                    <span className="text-sm">Có khách</span>
+                    <span className="text-sm">Yêu cầu thanh toán</span>
                 </div>
             </div>
 
@@ -322,7 +328,7 @@ const TableManagement = () => {
                             </span>
                         </div>
 
-                        <div className="mt-4">
+                        {/* <div className="mt-4">
                             <select
                                 value={table.status}
                                 onChange={(e) => {
@@ -335,7 +341,7 @@ const TableManagement = () => {
                                 <option value="available">Trống</option>
                                 <option value="occupied">Có khách</option>
                             </select>
-                        </div>
+                        </div> */}
                     </div>
                 ))}
             </div>
@@ -368,8 +374,8 @@ const TableManagement = () => {
                                     <div className="text-sm text-gray-700 space-y-1">
                                         <p><span className="font-semibold">Mã hóa đơn:</span> {selectedTable.invoice.invoiceNumber}</p>
                                         <p><span className="font-semibold">Ngày xuất:</span> {new Date(selectedTable.invoice.createdAt).toLocaleString('vi-VN')}</p>
-                                        {selectedTable.invoice.totalAmount && (
-                                            <p><span className="font-semibold">Tổng tiền:</span> {selectedTable.invoice.totalAmount.toLocaleString('vi-VN')}đ</p>
+                                        {selectedTable.order.totalAmount && (
+                                            <p><span className="font-semibold">Tổng tiền:</span> {selectedTable.order.totalAmount.toLocaleString('vi-VN')}đ</p>
                                         )}
                                     </div>
                                 </div>
@@ -534,7 +540,7 @@ const TableManagement = () => {
                                                     </p>
                                                     {oi.unitPrice && (
                                                         <p className="text-[11px] text-gray-400">
-                                                            ({oi.unitPrice.toLocaleString('vi-VN')}đ / {isCombo ? 'combo' : 'phần'})
+                                                            ({money(oi.unitPrice)} / {isCombo ? 'combo' : 'phần'})
                                                         </p>
                                                     )}
                                                 </div>
@@ -567,11 +573,6 @@ const TableManagement = () => {
                                             changeAmount: Math.max(0, paid - amount)
                                         });
                                     }}
-                                    onBlur={() => {
-                                        if (!paymentData.paidAmount || parseFloat(paymentData.paidAmount) < 0) {
-                                            setPaymentError('Vui lòng nhập số tiền nhận');
-                                        }
-                                    }}
                                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${paymentError
                                         ? 'border-red-500 focus:ring-red-500'
                                         : 'border-gray-300 focus:ring-blue-500'
@@ -582,6 +583,12 @@ const TableManagement = () => {
                                     required
                                     disabled={isProcessingPayment}
                                 />
+                                {/* Hiển thị format đẹp */}
+                                {paymentData.paidAmount && !paymentError && (
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {money(paymentData.paidAmount)}
+                                    </p>
+                                )}
                                 {paymentError && (
                                     <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
                                         <span>⚠️</span> {paymentError}

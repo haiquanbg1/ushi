@@ -49,7 +49,7 @@ class CustomerPromotionService {
             await transaction.commit();
             return {
                 success: true,
-                message: `Assigned to ${customers.length} customers`,
+                message: `Đã gán thành công.`,
                 assignedCount: customers.length
             };
         } catch (error) {
@@ -93,7 +93,7 @@ class CustomerPromotionService {
             throw new Error('Assignment not found');
         }
 
-        return { message: 'Promotion unassigned successfully' };
+        return { message: 'Bỏ gán thành công.' };
     }
 
     // ===== Usage Operations =====

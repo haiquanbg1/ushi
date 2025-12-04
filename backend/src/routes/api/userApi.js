@@ -89,6 +89,7 @@ router.get('/:id',
  * @access Private (Admin only)
  */
 router.post('/',
+    validateUserCreate,
     authMiddleware,
     userController.createUser
 );
@@ -99,6 +100,7 @@ router.post('/',
  * @access Private (Owner or Admin)
  */
 router.put('/:id',
+    validateUserUpdate,
     authMiddleware,
     userController.updateUser
 );

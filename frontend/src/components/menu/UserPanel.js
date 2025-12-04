@@ -8,7 +8,7 @@ export default function UserPanel({ auth, addToast }) {
     const [customer, setCustomer] = useState(null);
     const [form, setForm] = useState({
         fullName: auth.user.username || '',
-        phone: auth.user.phone || '',
+        // phone: auth.user.phone || '',
         email: auth.user.email || '',
     });
 
@@ -49,14 +49,14 @@ export default function UserPanel({ auth, addToast }) {
             await userAPI.update(auth.user.id, {
                 username: form.fullName,
                 email: form.email,
-                phone: form.phone,
+                // phone: form.phone,
             });
 
             auth.updateUser({
                 ...auth.user,
                 username: form.fullName,
                 email: form.email,
-                phone: form.phone,
+                // phone: form.phone,
             });
 
             addToast?.({ type: 'success', message: 'Cập nhật thông tin thành công!' });
@@ -78,10 +78,10 @@ export default function UserPanel({ auth, addToast }) {
                         <label className="text-sm text-gray-600 mb-2 block">Họ và tên</label>
                         <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full p-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-orange-300 outline-none transition-all" />
                     </div>
-                    <div>
+                    {/* <div>
                         <label className="text-sm text-gray-600 mb-2 block">Số điện thoại</label>
                         <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full p-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-orange-300 outline-none transition-all" />
-                    </div>
+                    </div> */}
                     <div>
                         <label className="text-sm text-gray-600 mb-2 block">Email</label>
                         <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email (tuỳ chọn)" className="w-full p-3 rounded-xl border border-orange-200 focus:ring-2 focus:ring-orange-300 outline-none transition-all" />

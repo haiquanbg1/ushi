@@ -28,7 +28,7 @@ function MenuSection() {
         isDefault: false
     });
     const [pendingComboItems, setPendingComboItems] = useState([]);
-
+    const [submitting, setSubmitting] = useState(false);
     const [formErrors, setFormErrors] = useState({});
 
     const toast = useToast();
@@ -142,8 +142,10 @@ function MenuSection() {
     const saveItem = async (e) => {
         e.preventDefault();
         if (!validateItemForm()) return;
+        if (submitting) return;
 
         try {
+            setSubmitting(true);
             const formData = new FormData();
             formData.append('name', itemForm.name.trim());
             formData.append('price', String(parseFloat(itemForm.price)));
@@ -172,6 +174,8 @@ function MenuSection() {
             console.error('Error saving item:', error);
             const msg = error?.response?.data?.message || 'Không thể lưu món. Vui lòng thử lại.';
             toast.error(msg, { title: 'Lỗi' });
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -259,9 +263,11 @@ function MenuSection() {
     const saveCombo = async (e) => {
         e.preventDefault();
         if (!validateComboForm()) return;
+        if (submitting) return;
 
         try {
             const formData = new FormData();
+            setSubmitting(true);
             formData.append('name', comboForm.name.trim());
             formData.append('price', String(parseFloat(comboForm.price)));
             formData.append('description', comboForm.description.trim());
@@ -313,6 +319,8 @@ function MenuSection() {
             console.error('Error saving combo:', error);
             const msg = error?.response?.data?.message || 'Không thể lưu combo. Vui lòng thử lại.';
             toast.error(msg, { title: 'Lỗi' });
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -382,8 +390,10 @@ function MenuSection() {
     const saveCategory = async (e) => {
         e.preventDefault();
         if (!validateCategoryForm()) return;
+        if (submitting) return;
 
         try {
+            setSubmitting(true);
             const data = {
                 categoryName: categoryForm.categoryName.trim(),
                 description: categoryForm.description.trim(),
@@ -407,6 +417,8 @@ function MenuSection() {
             console.error('Error saving category:', error);
             const msg = error?.response?.data?.message || 'Không thể lưu danh mục. Vui lòng thử lại.';
             toast.error(msg, { title: 'Lỗi' });
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -462,7 +474,7 @@ function MenuSection() {
     }
 
     // ======= Small helpers (format) =======
-    const money = (v) => (Number(v || 0)).toLocaleString() + ' đ';
+    const money = (v) => (Number(v || 0)).toLocaleString('vi-VN') + '₫';
 
     // ======= Reusable section: quản lý món trong combo =======
     const ComboItemsSection = ({ showForm = true }) => {
@@ -493,7 +505,7 @@ function MenuSection() {
                                 onChange={e => setNewComboItem(f => ({ ...f, quantity: Number(e.target.value) || 1 }))}
                             />
 
-                            <div className="flex gap-3">
+                            {/* <div className="flex gap-3">
                                 <label className="flex items-center gap-2 text-sm text-slate-300">
                                     <input
                                         type="checkbox"
@@ -510,7 +522,7 @@ function MenuSection() {
                                     />
                                     Mặc định
                                 </label>
-                            </div>
+                            </div> */}
 
                             <button
                                 type="submit"
@@ -534,10 +546,10 @@ function MenuSection() {
                                                 <p className="text-slate-300">
                                                     {item?.name || 'Món'} x{pi.quantity}
                                                 </p>
-                                                <p className="text-xs text-slate-500">
+                                                {/* <p className="text-xs text-slate-500">
                                                     {pi.isRequired ? 'Bắt buộc' : ''}{' '}
                                                     {pi.isDefault ? '• Mặc định' : ''}
-                                                </p>
+                                                </p> */}
                                             </div>
                                             <button
                                                 type="button"
@@ -632,7 +644,7 @@ function MenuSection() {
                                     <div className="min-w-0">
                                         <div className="font-medium text-slate-200">{it.name}</div>
                                         <div className="text-xs text-slate-400 mt-0.5">
-                                            {it.category?.categoryName || '—'} • {it.isAvailable ? 'Còn' : 'Hết'}
+                                            {it.category?.categoryName || '—'} • {it.isAvailable ? 'Hoạt động' : 'Tạm dừng'}
                                         </div>
                                         <div className="text-sm mt-1">{money(it.price)}</div>
                                     </div>
@@ -846,8 +858,10 @@ function MenuSection() {
                                 <label htmlFor="isAvailable" className="text-xs text-slate-400">Hoạt động</label>
                             </div>
 
-                            <button type="submit" className="w-full rounded-xl bg-emerald-600 py-2 font-medium hover:bg-emerald-700">
-                                {editingItem ? 'Cập nhật' : 'Tạo món'}
+                            <button type="submit"
+                                className="w-full rounded-xl bg-emerald-600 py-2 font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={submitting}>
+                                {submitting ? 'Đang xử lý...' : (editingItem ? 'Cập nhật' : 'Tạo món')}
                             </button>
                         </form>
                     </Modal>
@@ -1114,11 +1128,10 @@ function MenuSection() {
                                     </label>
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    className="mt-2 w-full rounded-xl bg-emerald-600 py-2 text-sm font-medium hover:bg-emerald-700"
-                                >
-                                    {editingCombo ? 'Cập nhật' : 'Tạo combo'}
+                                <button type="submit"
+                                    className="mt-2 w-full rounded-xl bg-emerald-600 py-2 text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={submitting}>
+                                    {submitting ? 'Đang xử lý...' : (editingCombo ? 'Cập nhật' : 'Tạo combo')}
                                 </button>
                             </form>
 
@@ -1195,7 +1208,7 @@ function MenuSection() {
                                 <tr>
                                     <th className="px-3 py-2 text-left">#</th>
                                     <th className="px-3 py-2 text-left">Tên danh mục</th>
-                                    <th className="px-3 py-2 text-left">Số món</th>
+                                    <th className="px-3 py-2 text-left">Vị trí</th>
                                     <th className="px-3 py-2 text-left">Trạng thái</th>
                                     <th className="px-3 py-2 text-right pr-4">Thao tác</th>
                                 </tr>
@@ -1294,8 +1307,10 @@ function MenuSection() {
                                 <label htmlFor="catIsActive" className="text-xs text-slate-400">Hoạt động</label>
                             </div>
 
-                            <button type="submit" className="w-full rounded-xl bg-emerald-600 py-2 font-medium hover:bg-emerald-700">
-                                {editingCategory ? 'Cập nhật' : 'Tạo danh mục'}
+                            <button type="submit"
+                                className="w-full rounded-xl bg-emerald-600 py-2 font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={submitting}>
+                                {submitting ? 'Đang xử lý...' : (editingCategory ? 'Cập nhật' : 'Tạo danh mục')}
                             </button>
                         </form>
                     </Modal>
