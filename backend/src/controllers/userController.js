@@ -248,6 +248,10 @@ module.exports = {
                 delete updateData.isActive;
             }
 
+            if (updateData.email == '') {
+                updateData.email = null
+            }
+
             const user = await userService.updateUser(parseInt(id), updateData);
 
             console.info(`User ${id} updated by ${req.user.username}`);

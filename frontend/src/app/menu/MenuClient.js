@@ -245,22 +245,36 @@ export default function MenuClient() {
 
     useEffect(() => {
         const initTableFromUrl = async () => {
-            if (!tableParam || tableStore.tableId) return;
+            // Không có param thì thôi
+            if (!tableParam) return;
+
+            // Chuyển sang number nếu backend dùng id số
+            const tableIdFromUrl = Number(tableParam);
+            if (!tableIdFromUrl) return; // param không hợp lệ
+
+            // Nếu đã đúng bàn này rồi thì không cần gọi lại
+            if (tableStore.tableId === tableIdFromUrl) return;
 
             try {
-                const response = await tableAPI.getById(tableParam);
+                const response = await tableAPI.getById(tableIdFromUrl);
                 const table = response?.data?.data;
 
                 if (table) {
                     tableStore.setTable(table);
+                } else {
+                    // Nếu không tìm thấy bàn thì clear cho sạch
+                    tableStore.clear();
                 }
             } catch (err) {
                 console.error('Error fetching table from URL param:', err);
+                // Optional: clear nếu lỗi, tránh giữ bàn cũ
+                // tableStore.clear();
             }
         };
 
         initTableFromUrl();
-    }, [tableParam, tableStore.tableId, tableStore]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tableParam, tableStore.tableId]);
 
     // Show Auth Modal khi truy cập chức năng cần login
     useEffect(() => {

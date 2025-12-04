@@ -39,7 +39,8 @@ function MenuSection() {
         price: '',
         categoryId: '',
         description: '',
-        imageFile: null,
+        imageFile: null,   // File | null
+        imageUrl: '',      // URL string từ DB
         isAvailable: true,
         isActive: true,
         sortOrder: 0
@@ -49,7 +50,8 @@ function MenuSection() {
         name: '',
         price: '',
         description: '',
-        imageFile: null,
+        imageFile: null,   // File | null
+        imageUrl: '',      // URL string từ DB
         isActive: true
     });
 
@@ -118,7 +120,8 @@ function MenuSection() {
                 price: item.price,
                 categoryId: item.categoryId,
                 description: item.description || '',
-                imageFile: item.image || null,
+                imageFile: null,              // ❗ không nhét URL vào đây
+                imageUrl: item.image || '',   // ❗ URL gốc
                 isAvailable: item.isAvailable,
                 isActive: item.isActive,
                 sortOrder: item.sortOrder || 0
@@ -131,6 +134,7 @@ function MenuSection() {
                 categoryId: '',
                 description: '',
                 imageFile: null,
+                imageUrl: '',
                 isAvailable: true,
                 isActive: true,
                 sortOrder: 0
@@ -155,8 +159,14 @@ function MenuSection() {
             formData.append('isActive', String(itemForm.isActive));
             formData.append('sortOrder', String(parseInt(String(itemForm.sortOrder)) || 0));
 
-            if (itemForm.imageFile) {
+            // ❗ Chỉ gửi file nếu có file mới
+            if (itemForm.imageFile instanceof File) {
                 formData.append('image', itemForm.imageFile);
+            }
+
+            // Nếu bạn muốn support xoá ảnh trên server:
+            if (!itemForm.imageFile && !itemForm.imageUrl && editingItem) {
+                formData.append('removeImage', 'true');
             }
 
             if (editingItem) {
@@ -217,7 +227,8 @@ function MenuSection() {
                 name: combo.name,
                 price: combo.price,
                 description: combo.description || '',
-                imageFile: combo.image || null, // ⚠️ Lưu URL string vào imageFile luôn
+                imageFile: null,              // ❗ không set URL
+                imageUrl: combo.image || '',  // ❗ URL gốc
                 isActive: combo.isActive
             });
 
@@ -230,6 +241,7 @@ function MenuSection() {
                 price: '',
                 description: '',
                 imageFile: null,
+                imageUrl: '',
                 isActive: true
             });
 
@@ -273,8 +285,13 @@ function MenuSection() {
             formData.append('description', comboForm.description.trim());
             formData.append('isActive', String(comboForm.isActive));
 
-            if (comboForm.imageFile) {
+            // ❗ Chỉ gửi file nếu có file mới
+            if (comboForm.imageFile instanceof File) {
                 formData.append('image', comboForm.imageFile);
+            }
+
+            if (!comboForm.imageFile && !comboForm.imageUrl && editingCombo) {
+                formData.append('removeImage', 'true');
             }
 
             if (editingCombo) {
@@ -690,7 +707,7 @@ function MenuSection() {
                                         <td className="px-3 py-2 text-slate-200">{it.name}</td>
                                         <td className="px-3 py-2">{money(it.price)}</td>
                                         <td className="px-3 py-2">{it.category?.categoryName || '—'}</td>
-                                        <td className="px-3 py-2">{it.isAvailable ? 'Còn' : 'Hết'}</td>
+                                        <td className="px-3 py-2">{it.isAvailable ? 'Hoạt động' : 'Tạm dừng'}</td>
                                         <td className="px-3 py-2">
                                             <div className="flex justify-end gap-2 pr-2">
                                                 <button
@@ -793,7 +810,7 @@ function MenuSection() {
                                     }}
                                 />
 
-                                {!itemForm.imageFile ? (
+                                {!itemForm.imageFile && !itemForm.imageUrl ? (
                                     // Không có file / link -> hiện khung chọn ảnh
                                     <label
                                         htmlFor="itemImageInput"
@@ -814,24 +831,26 @@ function MenuSection() {
                                     <div className="relative w-32 h-32 group">
                                         <img
                                             src={
-                                                typeof itemForm.imageFile === 'string'
-                                                    ? itemForm.imageFile
-                                                    : URL.createObjectURL(itemForm.imageFile)
+                                                itemForm.imageFile
+                                                    ? URL.createObjectURL(itemForm.imageFile)
+                                                    : itemForm.imageUrl
                                             }
                                             alt="Preview"
                                             className="w-full h-full object-cover rounded-lg"
                                         />
-                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center gap-1">
+                                        <div className="absolute inset-0 ...">
                                             <label
                                                 htmlFor="itemImageInput"
-                                                className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 cursor-pointer text-xs"
+                                                className="..."
                                             >
                                                 Đổi
                                             </label>
                                             <button
                                                 type="button"
-                                                onClick={() => setItemForm(f => ({ ...f, imageFile: null }))}
-                                                className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-xs"
+                                                onClick={() =>
+                                                    setItemForm(f => ({ ...f, imageFile: null, imageUrl: '' }))
+                                                }
+                                                className="..."
                                             >
                                                 Xóa
                                             </button>
@@ -1071,7 +1090,7 @@ function MenuSection() {
                                         }}
                                     />
 
-                                    {!comboForm.imageFile ? (
+                                    {!comboForm.imageFile && !comboForm.imageUrl ? (
                                         <label
                                             htmlFor="comboImageInput"
                                             className="flex flex-col items-center justify-center w-32 h-32 rounded-lg bg-slate-900 border-2 border-dashed border-slate-700 cursor-pointer hover:border-slate-600 hover:bg-slate-800 transition-colors"
@@ -1090,9 +1109,9 @@ function MenuSection() {
                                         <div className="relative w-32 h-32 group">
                                             <img
                                                 src={
-                                                    typeof comboForm.imageFile === 'string'
-                                                        ? comboForm.imageFile
-                                                        : URL.createObjectURL(comboForm.imageFile)
+                                                    comboForm.imageFile
+                                                        ? URL.createObjectURL(comboForm.imageFile)
+                                                        : comboForm.imageUrl
                                                 }
                                                 alt="Combo preview"
                                                 className="w-full h-full object-cover rounded-lg"
@@ -1106,7 +1125,7 @@ function MenuSection() {
                                                 </label>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setComboForm(f => ({ ...f, imageFile: null }))}
+                                                    onClick={() => setComboForm(f => ({ ...f, imageFile: null, imageUrl: '' }))}
                                                     className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-xs"
                                                 >
                                                     Xóa

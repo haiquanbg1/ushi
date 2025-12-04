@@ -1,4 +1,5 @@
 const ItemService = require('../services/menuItemService');
+const cloudinary = require('cloudinary').v2; // Import cloudinary
 
 exports.list = async (req, res) => {
     try {
@@ -24,17 +25,10 @@ exports.create = async (req, res) => {
             });
         }
 
-        // Lấy thông tin file từ Cloudinary
-        const imageData = {
-            url: req.file.path,           // URL của file trên Cloudinary
-            publicId: req.file.filename    // Public ID để xóa file sau này nếu cần
-        };
-
         // Gộp dữ liệu từ body và thông tin image
         const itemData = {
             ...req.body,
-            image: imageData.url,          // Hoặc lưu cả object imageData tùy schema
-            imagePublicId: imageData.publicId  // Lưu publicId để xóa sau này
+            image: req.file.path          // Chỉ lưu URL
         };
 
         const data = await ItemService.createItem(itemData);
@@ -64,16 +58,40 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
     try {
-        const data = await ItemService.updateItem(req.params.id, req.body);
+        let itemData = { ...req.body };
+
+        // Nếu có file mới được upload, cập nhật URL ảnh mới
+        if (req.file) {
+            itemData.image = req.file.path;
+        }
+
+        const data = await ItemService.updateItem(req.params.id, itemData);
+
         res.json({ ok: true, data });
-    } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+    } catch (e) {
+        console.error('Error in update controller:', e);
+
+        // Nếu có lỗi và đã upload file mới, xóa file mới trên Cloudinary
+        if (req.file && req.file.filename) {
+            try {
+                await cloudinary.uploader.destroy(req.file.filename);
+            } catch (deleteError) {
+                console.error('Error deleting uploaded file:', deleteError);
+            }
+        }
+
+        res.status(400).json({ ok: false, message: e.message });
+    }
 };
 
 exports.remove = async (req, res) => {
     try {
         const data = await ItemService.deleteItem(req.params.id);
         res.json({ ok: true, data });
-    } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+    } catch (e) {
+        console.error('Error in remove controller:', e);
+        res.status(400).json({ ok: false, message: e.message });
+    }
 };
 
 exports.byCategory = async (req, res) => {

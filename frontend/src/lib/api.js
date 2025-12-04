@@ -114,7 +114,9 @@ export const itemAPI = {
     create: (item) => apiClient.post('/items', item, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    update: (id, item) => apiClient.put(`/items/${id}`, item),
+    update: (id, item) => apiClient.put(`/items/${id}`, item, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     delete: (id) => apiClient.delete(`/items/${id}`),
 };
 
@@ -127,7 +129,9 @@ export const comboAPI = {
     create: (combo) => apiClient.post('/combos', combo, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    update: (id, combo) => apiClient.put(`/combos/${id}`, combo),
+    update: (id, combo) => apiClient.put(`/combos/${id}`, combo, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     delete: (id) => apiClient.delete(`/combos/${id}`),
 };
 

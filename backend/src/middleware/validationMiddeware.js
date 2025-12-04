@@ -165,8 +165,8 @@ const validateUserUpdate = async (req, res, next) => {
         }
     }
 
-    if (email && email.trim() !== "") {
-        if (!validators.isEmail(email)) {
+    if (email?.trim()) {
+        if (!validators.isEmail(email.trim())) {
             return errorResponse(res, StatusCodes.BAD_REQUEST, "Địa chỉ email không đúng định dạng.");
         }
     }

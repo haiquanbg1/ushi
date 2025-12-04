@@ -7,7 +7,7 @@ router.get('/search', c.search);
 router.get('/category/:categoryId', c.byCategory);
 router.get('/:id', c.get);
 router.post('/', uploadMiddleware, c.create);
-router.put('/:id', c.update);
+router.put('/:id', uploadMiddleware, c.update);
 router.delete('/:id', c.remove);
 
 module.exports = router;
