@@ -49,6 +49,7 @@ class OrderService {
 
             return order;
         } catch (error) {
+            console.log(error)
             throw new Error(`Error creating order: ${error.message}`);
         }
     }

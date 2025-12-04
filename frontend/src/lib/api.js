@@ -137,6 +137,7 @@ export const orderAPI = {
     getToday: () => apiClient.get('/orders/today'),
     getByStatus: (status) => apiClient.get(`/orders/status/${status}`),
     getByCustomer: (customerId) => apiClient.get(`/orders/customer/${customerId}`),
+    getByTableActive: (tableId) => apiClient.get(`/orders/table/${tableId}/active`),
     getById: (id) => apiClient.get(`/orders/${id}`),
     getActiveUnpaid: (customerId, tableId) => apiClient.get('/orders/active-unpaid', { params: { customerId, tableId } }),
     create: (order) => apiClient.post('/orders', order),

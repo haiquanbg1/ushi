@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { X, Minus, Plus } from 'lucide-react';
-import { orderAPI, orderDetailAPI, customerAPI } from '@/lib/api';
+import { orderAPI, orderDetailAPI, customerAPI, tableAPI } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
 const tone = {
@@ -11,7 +11,7 @@ const tone = {
 
 const GUEST_ORDER_ID_KEY = 'guest-order-id';
 
-export default function CartDrawer({ open, onClose, cart, customerId, tableId, setCustomerId }) {
+export default function CartDrawer({ open, onClose, cart, tableId }) {
     const [placing, setPlacing] = useState(false);
     const auth = useAuth();
 
@@ -25,57 +25,12 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
     const handlePlaceOrder = async () => {
         if (cart.items.length === 0) return;
 
-        if (!customerId && auth?.user) {
-            const customer = await customerAPI.getByUser(auth.user.id);
-            customerId = customer?.data?.data?.id;
-        }
-
-        let effectiveCustomerId = customerId || 1;
-        const isGuest = !customerId || customerId === 1;
+        const order = await orderAPI.getByTableActive(tableId);
 
         setPlacing(true);
         try {
-            let order;
-            let existingOrder = null;
-
-            // Guest: check localStorage
-            if (isGuest) {
-                const storedOrderId = localStorage.getItem(GUEST_ORDER_ID_KEY);
-                if (storedOrderId) {
-                    try {
-                        const orderRes = await orderAPI.getById(storedOrderId);
-                        existingOrder = orderRes?.data?.data;
-                        if (
-                            existingOrder &&
-                            existingOrder.orderStatus !== 'completed' &&
-                            existingOrder.orderStatus !== 'cancelled'
-                        ) {
-                            const payments = existingOrder.payments || [];
-                            const hasPaidPayment = payments.some(
-                                (p) => p.paymentStatus === 'paid'
-                            );
-                            if (hasPaidPayment) {
-                                existingOrder = null;
-                                localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                            }
-                        } else {
-                            existingOrder = null;
-                            localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                        }
-                    } catch (e) {
-                        console.error('Error fetching stored order:', e);
-                        existingOrder = null;
-                        localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                    }
-                }
-            } else {
-                // Logged-in: get active unpaid order
-                const existingOrderRes = await orderAPI.getActiveUnpaid(
-                    effectiveCustomerId,
-                    tableId
-                );
-                existingOrder = existingOrderRes?.data?.data;
-            }
+            const existingOrder = order?.data?.data;
+            let newOrder;
 
             if (existingOrder && existingOrder.id) {
                 // Lấy status đúng field
@@ -109,28 +64,17 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                     existingOrder.id,
                     itemsToAdd
                 );
-                order = addItemsRes?.data?.data;
+                const order = addItemsRes?.data?.data;
                 if (!order?.id) throw new Error('Không thể thêm món vào đơn hàng');
             } else {
-                // Create new order
-                if (effectiveCustomerId === 1) {
-                    const customer = await customerAPI.create({});
-                    effectiveCustomerId = customer?.data?.data?.id;
-                    setCustomerId(effectiveCustomerId);
-                }
-
                 const createRes = await orderAPI.create({
-                    customerId: effectiveCustomerId,
                     tableId: tableId ?? null,
                     totalAmount: subtotal,
                     orderStatus: 'pending',
                 });
-                order = createRes?.data?.data;
+                console.log(createRes.data.data.id)
+                const order = createRes?.data?.data;
                 if (!order?.id) throw new Error('Không tạo được đơn hàng');
-
-                if (isGuest) {
-                    localStorage.setItem(GUEST_ORDER_ID_KEY, order.id.toString());
-                }
 
                 // Tạo chi tiết order lần đầu (item / combo)
                 await Promise.all(
@@ -152,13 +96,15 @@ export default function CartDrawer({ open, onClose, cart, customerId, tableId, s
                         )
                     )
                 );
+
+                newOrder = order;
             }
 
             cart.clear();
             onClose?.();
             const message = existingOrder
-                ? `Đã thêm món vào đơn #${order.id}. Cảm ơn bạn!`
-                : `Đã tạo đơn #${order.id}. Cảm ơn bạn!`;
+                ? `Đã thêm món vào đơn #${existingOrder.id}. Cảm ơn bạn!`
+                : `Đã tạo đơn #${newOrder.id}. Cảm ơn bạn!`;
             alert(message);
         } catch (e) {
             console.error('place order failed', e);

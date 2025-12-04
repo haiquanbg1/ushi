@@ -10,9 +10,9 @@ import {
     CheckCircle2,
     AlertCircle,
 } from 'lucide-react';
-import { orderAPI, orderDetailAPI, customerPromotionAPI } from '@/lib/api';
+import { orderAPI, orderDetailAPI, customerPromotionAPI, customerAPI } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 
-const GUEST_ORDER_ID_KEY = 'guest-order-id';
 const DISCOUNT_STORAGE_KEY = 'applied-discount-code';
 
 const tone = {
@@ -20,11 +20,12 @@ const tone = {
     primary: 'bg-orange-600 hover:bg-orange-700 text-white transition-all duration-200',
 };
 
-export default function OrderReview({ customerId, tableId, onClose }) {
+export default function OrderReview({ tableId, onClose }) {
     const [currentOrder, setCurrentOrder] = useState(null);
     const [orderItems, setOrderItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [customer, setCustomer] = useState(null);
 
     // Promotion state
     const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -35,57 +36,21 @@ export default function OrderReview({ customerId, tableId, onClose }) {
 
     // Payment popup
     const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+    const auth = useAuth();
 
     useEffect(() => {
         fetchCurrentOrder();
         const interval = setInterval(fetchCurrentOrder, 30000);
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [customerId, tableId]);
+    }, [tableId]);
 
     const fetchCurrentOrder = async () => {
-        const isGuest = !customerId || customerId === 1;
+        const response = await orderAPI.getByTableActive(tableId);
 
         try {
             setRefreshing(true);
-            let order = null;
-
-            if (isGuest) {
-                const storedOrderId = typeof window !== 'undefined'
-                    ? localStorage.getItem(GUEST_ORDER_ID_KEY)
-                    : null;
-
-                if (storedOrderId) {
-                    try {
-                        const orderRes = await orderAPI.getById(storedOrderId);
-                        order = orderRes?.data?.data;
-
-                        if (
-                            order &&
-                            (order.orderStatus === 'completed' ||
-                                order.orderStatus === 'cancelled')
-                        ) {
-                            order = null;
-                            localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                        } else if (order) {
-                            const payments = order.payments || [];
-                            const hasPaidPayment = payments.some(
-                                (p) => p.paymentStatus === 'paid'
-                            );
-                            if (hasPaidPayment) {
-                                order = null;
-                                localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Error fetching stored order:', e);
-                        localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                    }
-                }
-            } else {
-                const res = await orderAPI.getActiveUnpaid(customerId, tableId);
-                order = res?.data?.data || null;
-            }
+            let order = response?.data?.data;
 
             if (order && order.id) {
                 setCurrentOrder(order);
@@ -108,7 +73,6 @@ export default function OrderReview({ customerId, tableId, onClose }) {
     // Load discount + promotions khi đã có order
     useEffect(() => {
         if (currentOrder) {
-            loadSavedDiscount();
             fetchAvailablePromotions();
         } else {
             setAppliedCoupon(null);
@@ -116,43 +80,55 @@ export default function OrderReview({ customerId, tableId, onClose }) {
             setPromoError('');
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentOrder, customerId]);
-
-    const loadSavedDiscount = () => {
-        try {
-            const effectiveCustomerId = customerId || 1;
-            const saved = typeof window !== 'undefined'
-                ? localStorage.getItem(DISCOUNT_STORAGE_KEY)
-                : null;
-            if (!saved) return;
-
-            const parsed = JSON.parse(saved);
-            if (parsed.customerId === effectiveCustomerId) {
-                setAppliedCoupon(parsed.coupon);
-            }
-        } catch (e) {
-            console.error('Error loading saved discount:', e);
-        }
-    };
+    }, [currentOrder]);
 
     const fetchAvailablePromotions = async () => {
         setPromoLoading(true);
         setPromoError('');
+
         try {
-            const effectiveCustomerId = customerId || 1;
-            const res = await customerPromotionAPI.getCustomerPromotions(
-                effectiveCustomerId,
-                {}
+            // Fetch customer info - xử lý 404 riêng
+            let customerResponse;
+            try {
+                customerResponse = await customerAPI.getByUser(auth?.user?.id);
+            } catch (customerError) {
+                if (customerError.response?.status === 404) {
+                    // Customer chưa tồn tại - trường hợp bình thường
+                    setAvailablePromotions([]);
+                    return; // Exit sớm, không cần throw error
+                }
+                throw customerError; // Throw lại các lỗi khác
+            }
+
+            const customerId = customerResponse?.data?.data?.id;
+            if (!customerId) {
+                setAvailablePromotions([]);
+                return;
+            }
+
+            setCustomer(customerId);
+
+            // Fetch promotions
+            const promotionsResponse = await customerPromotionAPI.getCustomerPromotions(
+                customerId
             );
 
-            if (res.data?.data) {
-                setAvailablePromotions(res.data.data);
+            const promotions = promotionsResponse?.data?.data || [];
+            setAvailablePromotions(promotions);
+
+        } catch (error) {
+            console.error('Error fetching promotions:', error);
+
+            if (error.response?.status === 401) {
+                setPromoError('Phiên đăng nhập hết hạn');
+            } else if (error.response?.status === 404) {
+                setPromoError('Không tìm thấy mã giảm giá');
+            } else if (!error.response) {
+                setPromoError('Không có kết nối mạng');
             } else {
-                setAvailablePromotions([]);
+                setPromoError('Không thể tải danh sách mã giảm giá');
             }
-        } catch (e) {
-            console.error('Error fetching promotions:', e);
-            setPromoError('Không thể tải danh sách mã giảm giá');
+
             setAvailablePromotions([]);
         } finally {
             setPromoLoading(false);
@@ -245,7 +221,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
 
         try {
             const promotion = promotionData.promotion || promotionData;
-            const effectiveCustomerId = customerId || 1;
+            const effectiveCustomerId = customer;
             const subtotal = calculateTotal();
 
             if (promotion.id) {
@@ -258,13 +234,6 @@ export default function OrderReview({ customerId, tableId, onClose }) {
 
                 if (res.data?.data?.eligible) {
                     setAppliedCoupon(promotionData);
-                    localStorage.setItem(
-                        DISCOUNT_STORAGE_KEY,
-                        JSON.stringify({
-                            customerId: effectiveCustomerId,
-                            coupon: promotionData,
-                        })
-                    );
                     setShowCoupons(false);
                     setPromoError('');
                 } else {
@@ -274,13 +243,6 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                 }
             } else {
                 setAppliedCoupon(promotionData);
-                localStorage.setItem(
-                    DISCOUNT_STORAGE_KEY,
-                    JSON.stringify({
-                        customerId: effectiveCustomerId,
-                        coupon: promotionData,
-                    })
-                );
                 setShowCoupons(false);
                 setPromoError('');
             }
@@ -322,7 +284,7 @@ export default function OrderReview({ customerId, tableId, onClose }) {
         }
 
         try {
-            const effectiveCustomerId = customerId || 1;
+            const effectiveCustomerId = customer;
 
             // Cập nhật order với discountAmount & totalAmount
             await orderAPI.update(currentOrder.id, {
@@ -351,11 +313,6 @@ export default function OrderReview({ customerId, tableId, onClose }) {
                             orderAmount: subtotal,
                         }
                     );
-                }
-
-                // Xoá mã đã lưu ở localStorage sau khi dùng xong
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem(DISCOUNT_STORAGE_KEY);
                 }
             }
 

@@ -33,17 +33,20 @@ import {
 } from '@/lib/api';
 
 // =================== Cart Store ===================
+// Cart chỉ nằm ở localStorage, không sync từ server
 const useCartStore = create(
     persist(
         (set, get) => ({
             items: [],
             setAll: (items) => set({ items }),
             add: (item) => {
-                const exists = get().items.find((i) => i.id === item.id);
+                const exists = get().items.find((i) => i.id === item.id && i.type === item.type);
                 if (exists) {
                     set({
                         items: get().items.map((i) =>
-                            i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+                            i.id === item.id && i.type === item.type
+                                ? { ...i, quantity: i.quantity + 1 }
+                                : i
                         ),
                     });
                 } else {
@@ -58,7 +61,10 @@ const useCartStore = create(
                         )
                         .filter((i) => i.quantity > 0),
                 }),
-            remove: (id) => set({ items: get().items.filter((i) => i.id !== id) }),
+            remove: (id) =>
+                set({
+                    items: get().items.filter((i) => i.id !== id),
+                }),
             clear: () => set({ items: [] }),
         }),
         { name: 'order-cart-v1' }
@@ -66,15 +72,18 @@ const useCartStore = create(
 );
 
 // =================== Table Store ===================
+// Chỉ giữ thông tin bàn + customerId thực nếu đã login.
+// Guest = customerId === null
 const useTableStore = create(
     persist(
         (set) => ({
             tableId: null,
             tableNumber: null,
-            customerId: 1,
-            setTable: (table) => set({ tableId: table.id, tableNumber: table.tableNumber }),
+            customerId: null,
+            setTable: (table) =>
+                set({ tableId: table.id, tableNumber: table.tableNumber }),
             setCustomer: (customerId) => set({ customerId }),
-            clear: () => set({ tableId: null, customerId: null }),
+            clear: () => set({ tableId: null, tableNumber: null, customerId: null }),
         }),
         { name: 'table-session-v1' }
     )
@@ -82,47 +91,14 @@ const useTableStore = create(
 
 const GUEST_ORDER_ID_KEY = 'guest-order-id';
 
-const fillCartFromServer = async (cid, cartStore, isGuest = false) => {
+// Hàm này vẫn có thể giữ lại nếu sau này muốn sync từ server,
+// hiện tại ta KHÔNG gọi nó nữa để cart chỉ lấy từ localStorage.
+const fillCartFromServer = async (tableId, cartStore) => {
     try {
-        let order = null;
+        if (!tableId) return;
 
-        if (isGuest) {
-            const storedOrderId = typeof window !== 'undefined'
-                ? localStorage.getItem(GUEST_ORDER_ID_KEY)
-                : null;
-
-            if (storedOrderId) {
-                try {
-                    const orderRes = await orderAPI.getById(storedOrderId);
-                    order = orderRes?.data?.data;
-
-                    if (
-                        order &&
-                        (order.orderStatus === 'completed' ||
-                            order.orderStatus === 'cancelled')
-                    ) {
-                        order = null;
-                        localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                    } else if (order) {
-                        const payments = order.payments || [];
-                        const hasPaidPayment = payments.some(
-                            (p) => p.paymentStatus === 'paid'
-                        );
-                        if (hasPaidPayment) {
-                            order = null;
-                            localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error fetching stored order:', e);
-                    localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                }
-            }
-        } else {
-            const res = await orderAPI.getActiveUnpaid(cid, null);
-            order = res?.data?.data;
-        }
-
+        const orderResponse = await orderAPI.getByTableActive(tableId);
+        const order = orderResponse?.data?.data;
         if (!order || !order.id) return;
 
         const d = await orderDetailAPI.getByOrder(order.id);
@@ -137,6 +113,7 @@ const fillCartFromServer = async (cid, cartStore, isGuest = false) => {
                 category: it.item?.categoryId || it.item?.category?.id,
                 image: it.item?.imageUrl || null,
                 desc: it.item?.description || '',
+                type: 'item',
             }))
             .filter((x) => x.id);
 
@@ -146,71 +123,20 @@ const fillCartFromServer = async (cid, cartStore, isGuest = false) => {
     }
 };
 
-const transferGuestOrdersToUser = async (newCustomerId, cartStore, tableId) => {
+// Khi user login (hoặc tạo customer mới), nếu bàn đang có order guest
+// thì update order đó gán customerId (attach guest order -> member)
+const transferGuestOrdersToUser = async (newCustomerId, tableId) => {
     try {
-        if (typeof window === 'undefined') return;
+        if (!tableId || !newCustomerId) return;
 
-        const storedOrderId = localStorage.getItem(GUEST_ORDER_ID_KEY);
+        const orderRes = await orderAPI.getByTableActive(tableId);
+        const order = orderRes?.data?.data;
 
-        if (!storedOrderId) {
-            return;
-        }
-
-        let guestOrder = null;
-        try {
-            const guestOrderRes = await orderAPI.getById(storedOrderId);
-            guestOrder = guestOrderRes?.data?.data;
-
-            if (
-                !guestOrder ||
-                guestOrder.orderStatus === 'completed' ||
-                guestOrder.orderStatus === 'cancelled'
-            ) {
-                localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                return;
-            }
-
-            const payments = guestOrder.payments || [];
-            const hasPaidPayment = payments.some(
-                (p) => p.paymentStatus === 'paid'
-            );
-            if (hasPaidPayment) {
-                localStorage.removeItem(GUEST_ORDER_ID_KEY);
-                return;
-            }
-        } catch (e) {
-            console.error('Error fetching guest order:', e);
-            localStorage.removeItem(GUEST_ORDER_ID_KEY);
-            return;
-        }
-
-        const userOrderRes = await orderAPI.getActiveUnpaid(newCustomerId, tableId);
-        const userOrder = userOrderRes?.data?.data;
-
-        if (userOrder && userOrder.id) {
-            const guestDetailsRes = await orderDetailAPI.getByOrder(guestOrder.id);
-            const guestDetails = guestDetailsRes?.data?.data || [];
-
-            if (guestDetails.length > 0) {
-                const itemsToAdd = guestDetails.map((detail) => ({
-                    itemId: detail.itemId || detail.item?.id,
-                    quantity: detail.quantity,
-                    unitPrice: detail.unitPrice,
-                }));
-
-                await orderAPI.addItems(userOrder.id, itemsToAdd);
-            }
-
-            await orderAPI.delete(guestOrder.id);
-            localStorage.removeItem(GUEST_ORDER_ID_KEY);
-        } else {
-            await orderAPI.update(guestOrder.id, {
+        if (order?.id) {
+            await orderAPI.update(order.id, {
                 customerId: newCustomerId,
             });
-            localStorage.removeItem(GUEST_ORDER_ID_KEY);
         }
-
-        await fillCartFromServer(newCustomerId, cartStore, false);
     } catch (e) {
         console.error('transferGuestOrdersToUser error', e);
         if (typeof window !== 'undefined') {
@@ -250,7 +176,8 @@ export default function MenuClient() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    // value không dùng, chỉ cần setter để truyền xuống dưới
+
+    // customerId thực (member), guest -> null
     const [, setLoggedInCustomerId] = useState(null);
 
     const totalQty = useMemo(
@@ -262,47 +189,11 @@ export default function MenuClient() {
         [cart.items]
     );
 
-    // Debug
-    useEffect(() => {
-        // console.log('🔍 Debug State:', {
-        //     'auth.loading': auth.loading,
-        //     'auth.user': auth.user?.username || null,
-        //     sessionChecked,
-        //     showAuthModal,
-        //     customerId: tableStore.customerId,
-        //     authInitialized,
-        // });
-
-        const demo = async () => {
-            if (auth.user && tableStore.customerId === 1) {
-                const customer = await customerAPI.getByUser(auth.user.id);
-                tableStore.setCustomer(customer?.data?.data?.id || 1);
-                setLoggedInCustomerId(customer?.data?.data?.id || null);
-            }
-        };
-
-        demo();
-    }, [
-        auth.loading,
-        auth.user,
-        sessionChecked,
-        showAuthModal,
-        tableStore.customerId,
-        authInitialized,
-        tableStore,
-    ]);
-
-    // Initialize Auth
+    // =================== AUTH INIT ===================
     useEffect(() => {
         const checkAuth = async () => {
             if (auth.loading) return;
             if (sessionChecked) return;
-
-            // console.log('Auth Check:', {
-            //     user: auth.user,
-            //     loading: auth.loading,
-            //     customerId: tableStore.customerId,
-            // });
 
             if (auth.user) {
                 try {
@@ -310,6 +201,7 @@ export default function MenuClient() {
                     const customer = response.data?.data;
 
                     if (customer) {
+                        // Nếu trước đó có guest-order-id -> attach order đó cho customer
                         const hasGuestOrder =
                             typeof window !== 'undefined' &&
                             localStorage.getItem(GUEST_ORDER_ID_KEY);
@@ -317,35 +209,30 @@ export default function MenuClient() {
                         if (hasGuestOrder) {
                             await transferGuestOrdersToUser(
                                 customer.id,
-                                cart,
                                 tableStore.tableId
                             );
                         }
 
                         tableStore.setCustomer(customer.id);
                         setLoggedInCustomerId(customer.id);
-                        setAuthInitialized(true);
-                        await fillCartFromServer(customer.id, cart, false);
                     } else {
-                        tableStore.setCustomer(1);
+                        // user login nhưng chưa có customer record
+                        tableStore.setCustomer(null);
                         setLoggedInCustomerId(null);
-                        setAuthInitialized(true);
                     }
                 } catch (err) {
                     console.error('Error getting customer:', err);
-                    tableStore.setCustomer(1);
+                    tableStore.setCustomer(null);
                     setLoggedInCustomerId(null);
-                    setAuthInitialized(true);
                 }
             } else {
-                tableStore.setCustomer(1);
+                // Guest
+                tableStore.setCustomer(null);
                 setLoggedInCustomerId(null);
-                setAuthInitialized(true);
-                await fillCartFromServer(1, cart, true);
-
                 setShowAuthModal(true);
             }
 
+            setAuthInitialized(true);
             setSessionChecked(true);
         };
 
@@ -353,12 +240,11 @@ export default function MenuClient() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [auth.loading, auth.user, sessionChecked]);
 
-    // Initialize Table from URL
+    // =================== INIT TABLE FROM URL ===================
     const tableParam = searchParams.get('table');
 
     useEffect(() => {
         const initTableFromUrl = async () => {
-            // Không có param hoặc đã có tableId thì thôi
             if (!tableParam || tableStore.tableId) return;
 
             try {
@@ -370,15 +256,13 @@ export default function MenuClient() {
                 }
             } catch (err) {
                 console.error('Error fetching table from URL param:', err);
-                // Nếu muốn thì toast ở đây
-                // toast.error('Không thể tải bàn từ URL');
             }
         };
 
         initTableFromUrl();
-    }, [tableParam, tableStore.tableId]);
+    }, [tableParam, tableStore.tableId, tableStore]);
 
-    // Show Auth Modal when navigating to features that require login
+    // Show Auth Modal khi truy cập chức năng cần login
     useEffect(() => {
         if (!sessionChecked) return;
         if (!auth.user && (active === 'history' || active === 'user')) {
@@ -402,7 +286,7 @@ export default function MenuClient() {
                 localStorage.removeItem(GUEST_ORDER_ID_KEY);
             }
 
-            tableStore.setCustomer(1);
+            tableStore.setCustomer(null);
             cart.clear();
             setAuthInitialized(false);
             setSessionChecked(false);
@@ -436,14 +320,13 @@ export default function MenuClient() {
 
                 await transferGuestOrdersToUser(
                     customerId,
-                    cart,
                     tableStore.tableId
                 );
 
                 tableStore.setCustomer(customerId);
                 setLoggedInCustomerId(customerId);
                 setAuthInitialized(true);
-                await fillCartFromServer(customerId, cart, false);
+
                 pushToast({
                     message: 'Tài khoản đã được tạo thành công!',
                     type: 'success',
@@ -453,7 +336,7 @@ export default function MenuClient() {
             }
         } catch (err) {
             console.error('Error creating customer:', err);
-            tableStore.setCustomer(1);
+            tableStore.setCustomer(null);
             setLoggedInCustomerId(null);
             setAuthInitialized(true);
             pushToast({
@@ -466,29 +349,25 @@ export default function MenuClient() {
     const handleAuthModalClose = async (action, userData) => {
         setShowAuthModal(false);
 
-        // console.log(action);
-
         if (action === 'skip') {
-            tableStore.setCustomer(1);
+            tableStore.setCustomer(null);
             setAuthInitialized(true);
             pushToast({ message: 'Đang sử dụng tài khoản khách' });
         } else if (action === 'login' && userData) {
             try {
-                // console.log('User logged in:', userData);
                 const response = await customerAPI.getByUser(userData.id);
                 const customer = response.data?.data;
 
                 if (customer) {
                     await transferGuestOrdersToUser(
                         customer.id,
-                        cart,
                         tableStore.tableId
                     );
 
                     tableStore.setCustomer(customer.id);
                     setLoggedInCustomerId(customer.id);
                     setAuthInitialized(true);
-                    await fillCartFromServer(customer.id, cart, false);
+
                     pushToast({
                         message: `Xin chào, ${userData.fullName || userData.username
                             }!`,
@@ -496,14 +375,14 @@ export default function MenuClient() {
                 }
             } catch (err) {
                 console.error('Error getting customer after login:', err);
-                tableStore.setCustomer(1);
+                tableStore.setCustomer(null);
                 setLoggedInCustomerId(null);
                 setAuthInitialized(true);
             }
         }
     };
 
-    // Fetch Data
+    // =================== FETCH MENU DATA ===================
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -552,10 +431,7 @@ export default function MenuClient() {
                     name: item.name,
                     price: item.price,
                     category: item.categoryId || item.category?.id,
-                    image:
-                        item.imageUrl ||
-                        item.image ||
-                        null,
+                    image: item.imageUrl || item.image || null,
                     desc: item.description || '',
                     isAvailable: item.isActive !== false,
                     sortOrder: item.sortOrder ?? 0,
@@ -679,9 +555,9 @@ export default function MenuClient() {
                                                 Bàn số {tableStore.tableNumber}
                                             </div>
                                             <div className="text-xs text-gray-600">
-                                                {tableStore.customerId === 1
-                                                    ? 'Khách'
-                                                    : 'Thành viên'}
+                                                {auth.user
+                                                    ? 'Thành viên'
+                                                    : 'Khách'}
                                             </div>
                                         </div>
                                     </div>
@@ -801,10 +677,9 @@ export default function MenuClient() {
                                         Đơn hàng hiện tại
                                     </h2>
                                     <OrderReview
-                                        customerId={
-                                            tableStore.customerId || 1
-                                        }
                                         tableId={tableStore.tableId}
+                                        // Nếu bạn vẫn cần customerId thật ở OrderReview
+                                        customerId={tableStore.customerId}
                                     />
                                 </section>
                             )}
@@ -850,14 +725,16 @@ export default function MenuClient() {
                 active={active}
             />
 
+            {/* CartDrawer chỉ dùng cart ở localStorage + tableId */}
             <CartDrawer
                 open={active === 'cart'}
                 onClose={() => setActive('menu')}
                 cart={cart}
-                customerId={tableStore.customerId}
                 tableId={tableStore.tableId}
+                customerId={tableStore.customerId}
                 setCustomerId={setLoggedInCustomerId}
             />
+
             <ItemModal
                 item={selectedItem}
                 open={!!selectedItem}
