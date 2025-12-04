@@ -480,149 +480,151 @@ export default function OrderReview({ tableId, onClose }) {
                 {/* Mã giảm giá + tổng tiền + nút thanh toán */}
                 <div className="border-t pt-4 space-y-3">
                     {/* Chọn mã giảm giá */}
-                    <div className="space-y-2">
-                        {!appliedCoupon ? (
-                            <button
-                                onClick={() => setShowCoupons(!showCoupons)}
-                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-dashed ${showCoupons
-                                    ? 'border-orange-400 bg-orange-50'
-                                    : 'border-orange-200 bg-white'
-                                    } hover:border-orange-400 hover:bg-orange-50 transition-all`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Tag className="w-4 h-4 text-orange-600" />
-                                    <span className="font-medium text-sm text-gray-700">
-                                        Chọn mã giảm giá
-                                    </span>
-                                </div>
-                                <span className="text-orange-600 text-xs font-medium">
-                                    {showCoupons
-                                        ? 'Đóng'
-                                        : `${availablePromotions.length} mã`}
-                                </span>
-                            </button>
-                        ) : (
-                            <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl p-3">
-                                <div className="flex items-center justify-between">
+                    {auth.user && (
+                        <div className="space-y-2">
+                            {!appliedCoupon ? (
+                                <button
+                                    onClick={() => setShowCoupons(!showCoupons)}
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-dashed ${showCoupons
+                                        ? 'border-orange-400 bg-orange-50'
+                                        : 'border-orange-200 bg-white'
+                                        } hover:border-orange-400 hover:bg-orange-50 transition-all`}
+                                >
                                     <div className="flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                        <div>
-                                            <div className="text-xs text-emerald-700 font-semibold">
-                                                {(
-                                                    appliedCoupon.promotion ||
-                                                    appliedCoupon
-                                                ).name}
-                                            </div>
-                                            <div className="text-xs text-emerald-600">
-                                                {getPromotionLabel(
-                                                    appliedCoupon.promotion ||
-                                                    appliedCoupon
-                                                )}
-                                            </div>
-                                        </div>
+                                        <Tag className="w-4 h-4 text-orange-600" />
+                                        <span className="font-medium text-sm text-gray-700">
+                                            Chọn mã giảm giá
+                                        </span>
                                     </div>
-                                    <button
-                                        onClick={removePromotion}
-                                        className="text-emerald-700 hover:bg-emerald-100 p-1.5 rounded-lg transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {promoError && (
-                            <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
-                                <AlertCircle className="w-4 h-4 text-rose-600" />
-                                <span className="text-xs text-rose-600">
-                                    {promoError}
-                                </span>
-                            </div>
-                        )}
-
-                        {showCoupons && !appliedCoupon && (
-                            <div className="space-y-2 max-h-40 overflow-y-auto">
-                                {promoLoading ? (
-                                    <div className="text-center py-4 text-sm text-gray-600">
-                                        Đang tải mã giảm giá...
-                                    </div>
-                                ) : availablePromotions && availablePromotions.length === 0 ? (
-                                    <div className="text-center py-4 text-sm text-gray-600">
-                                        Không có mã giảm giá khả dụng
-                                    </div>
-                                ) : (
-                                    availablePromotions.map((promotionData) => {
-                                        const promotion =
-                                            promotionData.promotion || promotionData;
-                                        const checkResult =
-                                            canApplyPromotion(promotionData);
-                                        const isEligible = checkResult.eligible;
-
-                                        return (
-                                            <button
-                                                key={
-                                                    promotionData.id || promotion.id
-                                                }
-                                                onClick={() =>
-                                                    applyPromotion(promotionData)
-                                                }
-                                                disabled={!isEligible}
-                                                className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all ${isEligible
-                                                    ? 'border-orange-200 bg-white hover:border-orange-400 hover:bg-orange-50'
-                                                    : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-                                                    }`}
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span
-                                                                className={`font-semibold ${isEligible
-                                                                    ? 'text-orange-600'
-                                                                    : 'text-gray-500'
-                                                                    }`}
-                                                            >
-                                                                {promotion.name}
-                                                            </span>
-                                                            <span
-                                                                className={`text-xs px-2 py-0.5 rounded ${isEligible
-                                                                    ? 'bg-orange-100 text-orange-700'
-                                                                    : 'bg-gray-100 text-gray-600'
-                                                                    }`}
-                                                            >
-                                                                {getPromotionLabel(
-                                                                    promotion
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-xs text-gray-600">
-                                                            {promotion.description ||
-                                                                `Giảm cho đơn từ ${(promotion.minOrderAmount ||
-                                                                    0).toLocaleString(
-                                                                        'vi-VN'
-                                                                    )}đ`}
-                                                        </div>
-                                                        {!isEligible &&
-                                                            checkResult.reason && (
-                                                                <div className="text-xs text-rose-600 mt-1">
-                                                                    {
-                                                                        checkResult.reason
-                                                                    }
-                                                                </div>
-                                                            )}
-                                                    </div>
-                                                    {isEligible && (
-                                                        <span className="text-orange-600 text-xs font-medium mt-0.5">
-                                                            Áp dụng
-                                                        </span>
+                                    <span className="text-orange-600 text-xs font-medium">
+                                        {showCoupons
+                                            ? 'Đóng'
+                                            : `${availablePromotions.length} mã`}
+                                    </span>
+                                </button>
+                            ) : (
+                                <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl p-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                            <div>
+                                                <div className="text-xs text-emerald-700 font-semibold">
+                                                    {(
+                                                        appliedCoupon.promotion ||
+                                                        appliedCoupon
+                                                    ).name}
+                                                </div>
+                                                <div className="text-xs text-emerald-600">
+                                                    {getPromotionLabel(
+                                                        appliedCoupon.promotion ||
+                                                        appliedCoupon
                                                     )}
                                                 </div>
-                                            </button>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={removePromotion}
+                                            className="text-emerald-700 hover:bg-emerald-100 p-1.5 rounded-lg transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {promoError && (
+                                <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                                    <AlertCircle className="w-4 h-4 text-rose-600" />
+                                    <span className="text-xs text-rose-600">
+                                        {promoError}
+                                    </span>
+                                </div>
+                            )}
+
+                            {showCoupons && !appliedCoupon && (
+                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                    {promoLoading ? (
+                                        <div className="text-center py-4 text-sm text-gray-600">
+                                            Đang tải mã giảm giá...
+                                        </div>
+                                    ) : availablePromotions && availablePromotions.length === 0 ? (
+                                        <div className="text-center py-4 text-sm text-gray-600">
+                                            Không có mã giảm giá khả dụng
+                                        </div>
+                                    ) : (
+                                        availablePromotions.map((promotionData) => {
+                                            const promotion =
+                                                promotionData.promotion || promotionData;
+                                            const checkResult =
+                                                canApplyPromotion(promotionData);
+                                            const isEligible = checkResult.eligible;
+
+                                            return (
+                                                <button
+                                                    key={
+                                                        promotionData.id || promotion.id
+                                                    }
+                                                    onClick={() =>
+                                                        applyPromotion(promotionData)
+                                                    }
+                                                    disabled={!isEligible}
+                                                    className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all ${isEligible
+                                                        ? 'border-orange-200 bg-white hover:border-orange-400 hover:bg-orange-50'
+                                                        : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span
+                                                                    className={`font-semibold ${isEligible
+                                                                        ? 'text-orange-600'
+                                                                        : 'text-gray-500'
+                                                                        }`}
+                                                                >
+                                                                    {promotion.name}
+                                                                </span>
+                                                                <span
+                                                                    className={`text-xs px-2 py-0.5 rounded ${isEligible
+                                                                        ? 'bg-orange-100 text-orange-700'
+                                                                        : 'bg-gray-100 text-gray-600'
+                                                                        }`}
+                                                                >
+                                                                    {getPromotionLabel(
+                                                                        promotion
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-xs text-gray-600">
+                                                                {promotion.description ||
+                                                                    `Giảm cho đơn từ ${(promotion.minOrderAmount ||
+                                                                        0).toLocaleString(
+                                                                            'vi-VN'
+                                                                        )}đ`}
+                                                            </div>
+                                                            {!isEligible &&
+                                                                checkResult.reason && (
+                                                                    <div className="text-xs text-rose-600 mt-1">
+                                                                        {
+                                                                            checkResult.reason
+                                                                        }
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                        {isEligible && (
+                                                            <span className="text-orange-600 text-xs font-medium mt-0.5">
+                                                                Áp dụng
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Tổng tiền */}
                     <div className="space-y-2">

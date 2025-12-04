@@ -149,8 +149,23 @@ function PromotionsSection() {
             setEditingPromotion(null);
             await load();
 
-            if (!editingPromotion) {
-                openAssignModal(promotion)
+            // 🔥 TỰ ĐỘNG GÁN CHO TẤT CẢ KHÁCH HÀNG KHI TẠO MỚI
+            if (!editingPromotion && promotion?.id) {
+                try {
+                    await customerPromotionAPI.assignToCustomers(promotion.id, {
+                        onlyRegistered: false,
+                    });
+
+                    toast.success('Đã gán khuyến mãi cho tất cả khách hàng.', {
+                        title: 'Thành công',
+                    });
+                } catch (err) {
+                    console.error('Lỗi khi tự gán khuyến mãi:', err);
+                    toast.error(
+                        'Tạo khuyến mãi thành công nhưng không gán được cho khách.',
+                        { title: 'Cảnh báo' }
+                    );
+                }
             }
         } catch (error) {
             console.error('Error saving promotion:', error);
@@ -160,6 +175,7 @@ function PromotionsSection() {
             );
         }
     };
+
 
     const openDeleteModal = (promotion) => {
         setPromotionToDelete(promotion);
@@ -649,7 +665,7 @@ function PromotionsSection() {
             </Modal>
 
             {/* ==================== MODAL: Gán khách hàng ==================== */}
-            <Modal
+            {/* <Modal
                 open={assignModalOpen}
                 title={`Gán khuyến mãi: ${selectedPromotion?.name || ''}`}
                 onClose={() => {
@@ -728,7 +744,7 @@ function PromotionsSection() {
                         </button>
                     </div>
                 </div>
-            </Modal>
+            </Modal> */}
 
             {/* ==================== MODAL: Xác nhận xóa ==================== */}
             <Modal
