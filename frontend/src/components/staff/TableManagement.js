@@ -328,7 +328,7 @@ const TableManagement = () => {
                             </span>
                         </div>
 
-                        <div className="mt-4">
+                        {/* <div className="mt-4">
                             <select
                                 value={table.status}
                                 onChange={(e) => {
@@ -342,7 +342,7 @@ const TableManagement = () => {
                                 <option value="occupied">Yêu cầu thanh toán</option>
                                 <option value="reserved">Đang dùng bữa</option>
                             </select>
-                        </div>
+                        </div> */}
                     </div>
                 ))}
             </div>
