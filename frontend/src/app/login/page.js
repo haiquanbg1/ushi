@@ -25,6 +25,7 @@ export default function LoginPage() {
                     router.push('/staff'); break;
                 default:
                     setErr('Sai tài khoản hoặc mật khẩu.');
+                    logout();
                     break;
             }
         }

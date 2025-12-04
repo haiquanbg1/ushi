@@ -30,6 +30,7 @@ export default function CartDrawer({ open, onClose, cart, tableId }) {
         setPlacing(true);
         try {
             const existingOrder = order?.data?.data;
+            console.log(existingOrder)
             let newOrder;
 
             if (existingOrder && existingOrder.id) {
