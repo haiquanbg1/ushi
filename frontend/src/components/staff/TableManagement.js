@@ -328,7 +328,7 @@ const TableManagement = () => {
                             </span>
                         </div>
 
-                        {/* <div className="mt-4">
+                        <div className="mt-4">
                             <select
                                 value={table.status}
                                 onChange={(e) => {
@@ -339,9 +339,10 @@ const TableManagement = () => {
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <option value="available">Trống</option>
-                                <option value="occupied">Có khách</option>
+                                <option value="occupied">Yêu cầu thanh toán</option>
+                                <option value="reserved">Đang dùng bữa</option>
                             </select>
-                        </div> */}
+                        </div>
                     </div>
                 ))}
             </div>
@@ -388,24 +389,30 @@ const TableManagement = () => {
 
                             <h4 className="font-semibold mb-3">Món ăn đã gọi:</h4>
                             <div className="space-y-3 mb-4">
-                                {selectedTable.orderDetails?.items?.map((item, index) => (
-                                    <div key={index} className="flex justify-between items-center border-b pb-2">
-                                        <div className="flex-1">
-                                            <p className="font-medium">{item.item.name}</p>
-                                            <p className="text-sm text-gray-600">
-                                                Số lượng: {item.quantity}
-                                            </p>
+                                {selectedTable.orderDetails?.items && selectedTable.orderDetails.items.length > 0 ? (
+                                    selectedTable.orderDetails.items.map((item, index) => (
+                                        <div key={index} className="flex justify-between items-center border-b pb-2">
+                                            <div className="flex-1">
+                                                <p className="font-medium">{item?.item?.name || 'Không có tên'}</p>
+                                                <p className="text-sm text-gray-600">
+                                                    Số lượng: {item?.quantity || 0}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-medium">
+                                                    {((item?.unitPrice || 0) * (item?.quantity || 0)).toLocaleString('vi-VN')}đ
+                                                </p>
+                                                {item?.status && (
+                                                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${getItemStatusColor(item.status)}`}>
+                                                        {getItemStatusText(item.status)}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-medium">
-                                                {(item.unitPrice * item.quantity).toLocaleString('vi-VN')}đ
-                                            </p>
-                                            <span className={`inline-block px-2 py-1 text-xs rounded-full ${getItemStatusColor(item.status)}`}>
-                                                {getItemStatusText(item.status)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <p className="text-gray-500 text-center py-4">Chưa có món nào</p>
+                                )}
                             </div>
 
                             <div className="border-t pt-4 mb-6">
