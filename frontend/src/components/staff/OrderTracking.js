@@ -63,9 +63,9 @@ export default function OrderTracking() {
                 await staffAPI.updateOrderItemStatus(orderDetailId, newStatus);
             }
 
-            // Cập nhật local state
-            setOrders((prev) => {
-                const updated = prev?.map((order) =>
+            // Chỉ cập nhật local state, KHÔNG đụng tới orderStatus nữa
+            setOrders((prev) =>
+                prev?.map((order) =>
                     order.id === orderId
                         ? {
                             ...order,
@@ -74,27 +74,8 @@ export default function OrderTracking() {
                             ),
                         }
                         : order
-                );
-
-                // Kiểm tra nếu tất cả items đã served/completed thì cập nhật order status (gửi API)
-                const updatedOrder = updated.find((o) => o.id === orderId);
-                if (updatedOrder) {
-                    const allItemsServed = updatedOrder.items.every((item) => {
-                        const effectiveStatus =
-                            item.id === orderDetailId ? newStatus : item.status;
-                        return effectiveStatus === 'served' || effectiveStatus === 'completed';
-                    });
-
-                    if (allItemsServed && (newStatus === 'served' || newStatus === 'completed')) {
-                        // không await ở đây để tránh block UI quá nhiều
-                        staffAPI.updateOrderStatus(orderId, 'confirmed').catch((e) =>
-                            console.error('Error updating order status:', e)
-                        );
-                    }
-                }
-
-                return updated;
-            });
+                )
+            );
         } catch (err) {
             console.error('Lỗi khi cập nhật trạng thái:', err);
             alert('Không thể cập nhật trạng thái. Vui lòng thử lại.');
