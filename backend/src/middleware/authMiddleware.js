@@ -8,7 +8,7 @@ const ms = require("ms");
 const COOKIE_CONFIG = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // Chỉ dùng HTTPS trong production
-    sameSite: 'strict', // CSRF protection
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: ms("7 days")
 };
 
@@ -24,7 +24,7 @@ const logout = (res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     };
 
     res.clearCookie("accessToken", cookieOptions);
