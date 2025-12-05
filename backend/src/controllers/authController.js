@@ -305,26 +305,91 @@ module.exports = {
         try {
             const { refreshToken } = req.cookies;
 
+            // 1. Kiểm tra có refresh token không
             if (!refreshToken) {
                 return errorResponse(
                     res,
                     StatusCodes.UNAUTHORIZED,
-                    "Không tìm thấy refresh token."
+                    "Không tìm thấy refresh token. Vui lòng đăng nhập lại."
                 );
             }
 
+            // 2. Decode và validate refresh token
+            const decoded = decodeRefreshToken(refreshToken);
+
+            // 3. Lấy thông tin user từ database
+            const user = await userService.getUserById(decoded.userId);
+
+            // 4. Kiểm tra user có tồn tại và hợp lệ không
+            if (!user) {
+                return errorResponse(
+                    res,
+                    StatusCodes.UNAUTHORIZED,
+                    "User không tồn tại. Vui lòng đăng nhập lại."
+                );
+            }
+
+            // 5. Kiểm tra user có bị khóa không (nếu có field này)
+            // if (!user.isActive) {
+            //     return errorResponse(
+            //         res,
+            //         StatusCodes.FORBIDDEN,
+            //         "Tài khoản đã bị vô hiệu hóa."
+            //     );
+            // }
+
+            // 6. Tạo access token mới
+            const newAccessToken = createAccessToken({
+                userId: user.id
+            });
+
+            // 7. Tạo refresh token mới (Token Rotation - Best Practice)
+            const newRefreshToken = createRefreshToken({
+                userId: user.id
+            });
+
+            // 8. Set cookies mới
+            res.cookie("accessToken", newAccessToken, ACCESS_TOKEN_CONFIG);
+            res.cookie("refreshToken", newRefreshToken, REFRESH_TOKEN_CONFIG);
+
+            // 9. Log để audit
+            console.info(`Tokens refreshed successfully for user ${user.id}`);
+
+            // 10. Trả về response
             return successResponse(
                 res,
                 StatusCodes.OK,
-                "Làm mới token thành công."
+                "Làm mới token thành công.",
+                {
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        // Các thông tin khác nếu cần
+                    }
+                }
             );
 
         } catch (error) {
             console.error("Refresh token error:", error.message);
+
+            // Phân biệt các loại lỗi
+            let errorMessage = "Refresh token không hợp lệ.";
+            let statusCode = StatusCodes.UNAUTHORIZED;
+
+            if (error.message?.includes("expired")) {
+                errorMessage = "Refresh token đã hết hạn. Vui lòng đăng nhập lại.";
+            } else if (error.message?.includes("invalid")) {
+                errorMessage = "Refresh token không hợp lệ. Vui lòng đăng nhập lại.";
+            }
+
+            // Clear cookies khi có lỗi
+            res.clearCookie("accessToken");
+            res.clearCookie("refreshToken");
+
             return errorResponse(
                 res,
-                StatusCodes.UNAUTHORIZED,
-                "Refresh token không hợp lệ."
+                statusCode,
+                errorMessage
             );
         }
     },

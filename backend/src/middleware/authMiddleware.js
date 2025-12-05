@@ -1,34 +1,56 @@
 const { StatusCodes } = require("http-status-codes");
 const { errorResponse } = require("../utils/response");
-const { decodeAccessToken, decodeRefreshToken, createAccessToken } = require("../utils/jwt");
+const {
+    decodeAccessToken,
+    decodeRefreshToken,
+    createAccessToken,
+    createRefreshToken
+} = require("../utils/jwt");
 const userService = require("../services/userService");
 const ms = require("ms");
 
-// Constants for better maintainability
-const COOKIE_CONFIG = {
+// Tách riêng config cho từng loại token
+const ACCESS_TOKEN_CONFIG = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Chỉ dùng HTTPS trong production
+    secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: ms("7 days")
+    path: '/',
+    maxAge: ms("15m") // Access token ngắn hạn
+};
+
+const REFRESH_TOKEN_CONFIG = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
+    maxAge: ms("7d") // Refresh token dài hạn
 };
 
 const ERROR_MESSAGES = {
     NO_REFRESH_TOKEN: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
     INVALID_REFRESH_TOKEN: "Xác thực không hợp lệ. Vui lòng đăng nhập lại.",
     REFRESH_TOKEN_EXPIRED: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.",
-    UNAUTHORIZED: "Bạn cần đăng nhập để tiếp tục."
+    UNAUTHORIZED: "Bạn cần đăng nhập để tiếp tục.",
+    USER_INACTIVE: "Tài khoản đã bị vô hiệu hóa."
 };
-
 
 const logout = (res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        path: '/'
     };
 
     res.clearCookie("accessToken", cookieOptions);
     res.clearCookie("refreshToken", cookieOptions);
+};
+
+// Helper function để validate user
+const validateUser = (user) => {
+    if (!user) return false;
+    // Thêm các điều kiện khác nếu cần: user.isActive, user.status, etc.
+    return true;
 };
 
 const authMiddleware = async (req, res, next) => {
@@ -47,22 +69,19 @@ const authMiddleware = async (req, res, next) => {
         // Thử decode access token trước
         if (accessToken) {
             const decodedAccessToken = decodeAccessToken(accessToken);
+            const user = await userService.getUserById(decodedAccessToken.userId);
 
-            // Cache user để tránh query database không cần thiết
-            if (req.user?.id !== decodedAccessToken.userId) {
-                req.user = await userService.getUserById(decodedAccessToken.userId);
-            }
-
-            // Kiểm tra user có tồn tại không
-            if (!req.user) {
+            // Validate user
+            if (!validateUser(user)) {
                 logout(res);
                 return errorResponse(
                     res,
                     StatusCodes.UNAUTHORIZED,
-                    ERROR_MESSAGES.UNAUTHORIZED
+                    ERROR_MESSAGES.USER_INACTIVE
                 );
             }
 
+            req.user = user;
             return next();
         }
     } catch (accessTokenError) {
@@ -82,37 +101,35 @@ const authMiddleware = async (req, res, next) => {
 
     try {
         const decodedRefreshToken = decodeRefreshToken(refreshToken);
-
-        // Tìm user từ refresh token
         const user = await userService.getUserById(decodedRefreshToken.userId);
 
-        if (!user) {
+        // Validate user
+        if (!validateUser(user)) {
             logout(res);
             return errorResponse(
                 res,
                 StatusCodes.UNAUTHORIZED,
-                ERROR_MESSAGES.INVALID_REFRESH_TOKEN
+                ERROR_MESSAGES.USER_INACTIVE
             );
         }
 
-        // Tạo access token mới
-        const newAccessToken = createAccessToken({
-            userId: user.id
-        });
+        // Tạo CẢ access và refresh token mới (Token Rotation)
+        const newAccessToken = createAccessToken({ userId: user.id });
+        const newRefreshToken = createRefreshToken({ userId: user.id });
 
-        // Set cookie với config bảo mật
-        res.cookie("accessToken", newAccessToken, COOKIE_CONFIG);
+        // Set cookies với config riêng biệt
+        res.cookie("accessToken", newAccessToken, ACCESS_TOKEN_CONFIG);
+        res.cookie("refreshToken", newRefreshToken, REFRESH_TOKEN_CONFIG);
 
         req.user = user;
 
         // Log để audit
-        console.info(`Token refreshed for user ${user.id}`);
+        console.info(`Tokens refreshed for user ${user.id}`);
 
         next();
 
     } catch (refreshTokenError) {
         console.warn("Refresh token validation failed:", refreshTokenError.message);
-
         logout(res);
 
         // Phân biệt lỗi hết hạn và lỗi khác

@@ -10,17 +10,76 @@ const apiClient = axios.create({
     withCredentials: true,
 });
 
-// Response interceptor để xử lý lỗi
-// apiClient.interceptors.response.use(
-//     (response) => response.data,
-//     (error) => {
-//         // console.log(error)
-//         if (error.response?.status === 401 && error.response?.data?.message != "Bạn cần đăng nhập để tiếp tục.") {
-//             window.location.href = '/login';
-//         }
-//         return Promise.reject(error);
-//     }
-// );
+// Flag để tránh nhiều request refresh cùng lúc
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
+// Response interceptor
+apiClient.interceptors.response.use(
+    (response) => response, // ✅ Trả về response gốc, không phải response.data
+    async (error) => {
+        const originalRequest = error.config;
+
+        // Nếu là lỗi 401 và chưa retry
+        if (error.response?.status === 401 && !originalRequest._retry) {
+
+            // Nếu đang refresh, đưa request vào queue
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => {
+                        return apiClient(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+                // Gọi refresh token
+                await apiClient.post('/auth/refresh');
+
+                // Refresh thành công, xử lý queue
+                processQueue(null);
+
+                // Retry request gốc
+                return apiClient(originalRequest);
+
+            } catch (refreshError) {
+                // Refresh thất bại, xử lý queue và redirect login
+                processQueue(refreshError, null);
+
+                // Redirect về login (hoặc clear state tùy app của bạn)
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                }
+
+                return Promise.reject(refreshError);
+
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 // Generic API helper
 export const api = {
@@ -72,6 +131,7 @@ export const authAPI = {
     register: (userData) => apiClient.post('/auth/register', userData),
     logout: () => apiClient.post('/auth/logout'),
     checkAuth: () => apiClient.get('/auth/check'),
+    refresh: () => apiClient.post('/auth/refresh'),
 };
 
 // User endpoints

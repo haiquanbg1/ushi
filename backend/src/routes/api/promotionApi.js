@@ -1,13 +1,14 @@
 const router = require('express').Router();
 const c = require('../../controllers/promotionController');
+const authMiddleware = require('../../middleware/authMiddleware');
 
 // Basic CRUD
 router.get('/', c.list);                    // GET /api/promotions
 router.get('/active', c.getActive);         // GET /api/promotions/active
 router.get('/:id', c.get);                  // GET /api/promotions/:id
-router.post('/', c.create);                 // POST /api/promotions
-router.put('/:id', c.update);               // PUT /api/promotions/:id
-router.delete('/:id', c.remove);            // DELETE /api/promotions/:id
+router.post('/', authMiddleware, c.create);                 // POST /api/promotions
+router.put('/:id', authMiddleware, c.update);               // PUT /api/promotions/:id
+router.delete('/:id', authMiddleware, c.remove);            // DELETE /api/promotions/:id
 
 // Utility endpoints
 router.get('/:id/stats', c.getStats);       // GET /api/promotions/:id/stats
