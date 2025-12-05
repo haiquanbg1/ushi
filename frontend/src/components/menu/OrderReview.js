@@ -290,7 +290,8 @@ export default function OrderReview({ tableId, onClose }) {
             await orderAPI.update(currentOrder.id, {
                 discountAmount: discount,
                 totalAmount: total,
-                orderStatus: "confirmed"
+                orderStatus: "confirmed",
+                customerId: effectiveCustomerId
             });
 
             setCurrentOrder({
