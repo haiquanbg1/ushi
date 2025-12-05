@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Table.init({
-    tableNumber: DataTypes.STRING,
+    tableNumber: DataTypes.INTEGER,
     capacity: DataTypes.INTEGER,
     status: {
       type: DataTypes.ENUM('available', 'occupied', 'reserved', 'cleaning', 'maintenance'),

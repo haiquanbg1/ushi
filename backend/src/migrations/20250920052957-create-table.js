@@ -10,7 +10,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       tableNumber: {
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER
       },
       capacity: {
         type: Sequelize.INTEGER
