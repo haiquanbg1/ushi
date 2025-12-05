@@ -597,10 +597,10 @@ function MenuSection() {
                                     <p className="text-slate-300">
                                         {ci.item?.name} x{ci.quantity}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    {/* <p className="text-xs text-slate-500">
                                         {ci.isRequired ? 'Bắt buộc' : ''}{' '}
                                         {ci.isDefault ? '• Mặc định' : ''}
-                                    </p>
+                                    </p> */}
                                 </div>
 
                                 {showForm && (
@@ -787,6 +787,7 @@ function MenuSection() {
                                 {formErrors.categoryId && <p className="text-xs text-rose-400 mt-1">{formErrors.categoryId}</p>}
                             </div>
 
+                            <label className="text-xs text-slate-400">Mô tả</label>
                             <textarea
                                 className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
                                 placeholder="Mô tả (tùy chọn)"
@@ -1227,7 +1228,7 @@ function MenuSection() {
                                 <tr>
                                     <th className="px-3 py-2 text-left">#</th>
                                     <th className="px-3 py-2 text-left">Tên danh mục</th>
-                                    <th className="px-3 py-2 text-left">Vị trí</th>
+                                    <th className="px-3 py-2 text-left">Số lượng</th>
                                     <th className="px-3 py-2 text-left">Trạng thái</th>
                                     <th className="px-3 py-2 text-right pr-4">Thao tác</th>
                                 </tr>
@@ -1293,6 +1294,7 @@ function MenuSection() {
                                 {formErrors.categoryName && <p className="text-xs text-rose-400 mt-1">{formErrors.categoryName}</p>}
                             </div>
 
+                            <label className="text-xs text-slate-400">Mô tả</label>
                             <textarea
                                 className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
                                 placeholder="Mô tả (tùy chọn)"
@@ -1308,6 +1310,7 @@ function MenuSection() {
                                 onChange={e => setCategoryForm(f => ({ ...f, image: e.target.value }))}
                             /> */}
 
+                            <label className="text-xs text-slate-400">Thứ tự sắp xếp</label>
                             <input
                                 type="number"
                                 className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"

@@ -224,7 +224,7 @@ function UsersSection() {
                         <thead className="bg-slate-900 text-slate-300">
                             <tr>
                                 <Th>#</Th>
-                                <Th>Tên đăng nhập</Th>
+                                <Th>Tên</Th>
                                 <Th>Số điện thoại</Th>
                                 <Th>Vai trò</Th>
                                 <Th>Trạng thái</Th>
@@ -298,15 +298,17 @@ function UsersSection() {
                 onClose={closeModal}
             >
                 <form onSubmit={saveUser} className="space-y-3">
+                    <label className="block text-xs text-slate-400 mb-1">Tên</label>
                     <input
                         className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
-                        placeholder="Tên đăng nhập"
+                        placeholder="Tên người dùng"
                         value={form.username}
                         onChange={(e) =>
                             setForm((f) => ({ ...f, username: e.target.value }))
                         }
                         required
                     />
+                    <label className="block text-xs text-slate-400 mb-1">Số điện thoại</label>
                     <input
                         className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
                         placeholder="Số điện thoại (10 chữ số)"
@@ -318,6 +320,7 @@ function UsersSection() {
                         required
                     />
                     <div>
+                        <label className="block text-xs text-slate-400 mb-1">Mật khẩu</label>
                         <input
                             type="password"
                             className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
@@ -339,6 +342,7 @@ function UsersSection() {
                             </p>
                         )}
                     </div>
+                    <label className="block text-xs text-slate-400 mb-1">Vai trò</label>
                     <select
                         className="w-full rounded-lg bg-slate-900 border border-slate-800 p-2"
                         value={form.roleId}
