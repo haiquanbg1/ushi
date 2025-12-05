@@ -27,6 +27,10 @@ export default function CartDrawer({ open, onClose, cart, tableId }) {
 
         const order = await orderAPI.getByTableActive(tableId);
 
+        let customerRes = null;
+        if (auth?.user?.id)
+            customerRes = await customerAPI.getByUser(auth?.user.id);
+
         setPlacing(true);
         try {
             const existingOrder = order?.data?.data;
@@ -60,6 +64,9 @@ export default function CartDrawer({ open, onClose, cart, tableId }) {
                 );
 
                 // console.log(itemsToAdd)
+                await orderAPI.update(existingOrder.id, {
+                    customerId: customerRes?.data?.data?.id
+                });
 
                 const addItemsRes = await orderAPI.addItems(
                     existingOrder.id,
@@ -72,6 +79,7 @@ export default function CartDrawer({ open, onClose, cart, tableId }) {
                     tableId: tableId ?? null,
                     totalAmount: subtotal,
                     orderStatus: 'pending',
+                    customerId: customerRes?.data?.data.id
                 });
                 console.log(createRes.data.data.id)
                 const order = createRes?.data?.data;
