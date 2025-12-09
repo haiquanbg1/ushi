@@ -8,6 +8,16 @@ const apiClient = axios.create({
         'Content-Type': 'application/json',
     },
     withCredentials: true,
+    timeout: 15000,
+});
+
+const refreshClient = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    withCredentials: true,
+    timeout: 5000,
 });
 
 // Flag để tránh nhiều request refresh cùng lúc
@@ -32,8 +42,22 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        if (!error.response) {
+            return Promise.reject(error);
+        }
+
+        // Nếu request đã được mark là refresh request -> reject để tránh loop
+        if (originalRequest._isRefreshRequest) {
+            return Promise.reject(error);
+        }
+
+        // Nếu đã retry lần rồi, reject
+        if (originalRequest._retry) {
+            return Promise.reject(error);
+        }
+
         // Nếu là lỗi 401 và chưa retry
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry && error.response.data.message === 'Người dùng chưa đăng nhập.') {
 
             // Nếu đang refresh, đưa request vào queue
             if (isRefreshing) {
@@ -53,7 +77,7 @@ apiClient.interceptors.response.use(
 
             try {
                 // Gọi refresh token
-                await apiClient.post('/auth/refresh');
+                await refreshClient.post('/auth/refresh');
 
                 // Refresh thành công, xử lý queue
                 processQueue(null);
@@ -67,7 +91,12 @@ apiClient.interceptors.response.use(
 
                 // Redirect về login (hoặc clear state tùy app của bạn)
                 if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
+                    const currentPath = window.location.pathname;
+                    const publicPaths = ['/login', '/register', '/forgot-password'];
+
+                    if (!publicPaths.includes(currentPath)) {
+                        window.location.href = '/login';
+                    }
                 }
 
                 return Promise.reject(refreshError);
