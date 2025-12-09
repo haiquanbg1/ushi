@@ -25,9 +25,12 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authAPI.checkAuth();
             setUser(response.data.data.user);
+            console.log('Auth check:', response.data.data.user);
         } catch (error) {
+            console.error('Auth check error:', error);
             setUser(null);
         } finally {
+            console.log('Setting loading to false');
             setLoading(false); // ✅ Chỉ set false sau khi check xong
         }
     };
